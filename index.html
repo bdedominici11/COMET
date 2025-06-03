@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Financiero y de Stock</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #0D0B14; 
+            color: #EAEAEA; 
+            -webkit-font-smoothing: antialiased; 
+            -moz-osx-font-smoothing: grayscale; 
+        }
+        .container { 
+            max-width: 1200px; 
+        }
+        
+        #authContainer {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        #userInfo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: #1A1629;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #2A2540;
+        }
+        #userInfo img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+        #userInfo span {
+            font-size: 0.875rem;
+            color: #A09CB8;
+        }
+
+        .header { 
+            text-align: center; 
+            padding-top: 4rem; /* Added padding to avoid overlap with authContainer */
+        }
+        .header h1 { 
+            color: #FFFFFF; 
+            font-size: 2.5rem; 
+            font-weight: 700; 
+            letter-spacing: -0.5px; 
+        }
+        
+        .tabs-nav { 
+            display: flex; 
+            justify-content: center; 
+            margin-bottom: 2.5rem; 
+            border-bottom: 1px solid #3A305A; 
+        }
+        .tab-button { 
+            padding: 12px 25px; 
+            cursor: pointer; 
+            background-color: transparent; 
+            color: #A09CB8; 
+            border: none; 
+            border-bottom: 3px solid transparent; 
+            font-size: 1.1rem; 
+            font-weight: 500; 
+            transition: color 0.3s ease, border-bottom-color 0.3s ease; 
+            margin: 0 10px; 
+        }
+        .tab-button:hover { color: #C879FF; }
+        .tab-button.active { 
+            color: #C879FF; 
+            border-bottom-color: #A755F7; 
+            font-weight: 600; 
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card { 
+            background-color: #1A1629; 
+            padding: 1.5rem; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3), 0 0 15px rgba(120, 50, 220, 0.1); 
+            border: 1px solid #2A2540; 
+        }
+        .card h2 { 
+            color: #C879FF; 
+            font-size: 1.75rem; 
+            font-weight: 600; 
+            margin-bottom: 1.25rem; 
+            padding-bottom: 0.75rem; 
+            border-bottom: 1px solid #3A305A; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 0.5rem; 
+            font-weight: 500; 
+            color: #A09CB8; 
+            font-size: 0.9rem; 
+        }
+        input[type="text"], input[type="number"], input[type="date"], select, textarea { 
+            width: 100%; 
+            padding: 12px 15px; 
+            margin-bottom: 1.25rem; 
+            border: 1px solid #3A305A; 
+            border-radius: 8px; 
+            background-color: #0D0B14; 
+            color: #EAEAEA; 
+            box-sizing: border-box; 
+            font-size: 0.95rem; 
+            transition: border-color 0.3s ease, box-shadow 0.3s ease; 
+        }
+        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, select:focus, textarea:focus { 
+            outline: none; 
+            border-color: #A755F7; 
+            box-shadow: 0 0 0 3px rgba(167, 85, 247, 0.3); 
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator { 
+            filter: invert(1) brightness(0.8); 
+        }
+
+        button { 
+            padding: 12px 25px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1rem; 
+            font-weight: 600; 
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease; 
+            line-height: 1.5; 
+        }
+        .btn-primary { 
+            background-color: #8B5CF6; 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.25); 
+        }
+        .btn-primary:hover { 
+            background-color: #7C3AED; 
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35); 
+            transform: translateY(-2px); 
+        }
+         .btn-google {
+            background-color: #4285F4; color: white;
+            display: flex; align-items: center; justify-content: center;
+            gap: 0.5rem; /* Reduced gap */
+            padding: 0.5rem 1rem; /* Adjusted padding */
+            font-size: 0.9rem;
+        }
+        .btn-google:hover { background-color: #357AE8; }
+        .btn-google svg { width: 18px; height: 18px; }
+
+        .btn-secondary {
+            background-color: #3A305A;
+            color: #A09CB8;
+            border: 1px solid #4A406A;
+        }
+        .btn-secondary:hover {
+            background-color: #4A406A;
+            color: #C879FF;
+        }
+        .btn-cancel {
+            background-color: #555;
+            color: white;
+        }
+        .btn-cancel:hover {
+            background-color: #666;
+        }
+
+
+        .summary-item { 
+            background-color: #2A2540; 
+            padding: 1.25rem; 
+            border-radius: 10px; 
+            text-align: center; 
+            border: 1px solid #3A305A; 
+        }
+        .summary-item h3 { 
+            color: #C879FF; 
+            font-size: 1.1rem; 
+            margin-bottom: 0.5rem; 
+            font-weight: 500; 
+        }
+        .summary-item p { 
+            color: #FFFFFF; 
+            font-size: 1.8rem; 
+            font-weight: 700; 
+        }
+        
+        .list-item { 
+            background-color: #1F1C30; 
+            padding: 1.125rem; 
+            border-radius: 10px; 
+            margin-bottom: 0.75rem; 
+            border-left: 4px solid #A755F7; 
+            transition: background-color 0.3s ease; 
+        }
+        .list-item:hover { background-color: #25213A; }
+        .list-item p { 
+            margin: 0.375rem 0; 
+            font-size: 0.9rem; 
+        }
+        .list-item strong { 
+            color: #B0A8D8; 
+            font-weight: 500; 
+        }
+        .list-item .actions button {
+            font-size: 0.8rem;
+            padding: 6px 10px;
+        }
+        
+        .footer { 
+            text-align: center; 
+            margin-top: 3.125rem; 
+            padding: 1.25rem; 
+            background-color: transparent; 
+            color: #6A628F; 
+            font-size: 0.85rem; 
+        }
+        .footer p:first-child { margin-bottom: 5px; }
+        
+        .text-gray-700 { 
+            background-color: #100E1C !important; 
+            color: #908BAA !important; 
+        }
+        .text-gray-400 { 
+            color: #7A7299; 
+            padding: 0.625rem 0; 
+        }
+        
+        .delete-button { 
+            background-image: linear-gradient(to right, #E53E3E, #C53030); 
+            color: white; 
+            /* padding: 6px 12px; -> Handled by .actions button */
+            /* font-size: 0.8rem; -> Handled by .actions button */
+            font-weight: 500; 
+            box-shadow: 0 2px 8px rgba(200, 50, 50, 0.3); 
+        }
+        .delete-button:hover { 
+            background-image: linear-gradient(to right, #F56565, #E53E3E); 
+            box-shadow: 0 4px 12px rgba(200, 50, 50, 0.4); 
+            transform: translateY(-1px); 
+        }
+
+        ::-webkit-scrollbar { width: 8px; } 
+        ::-webkit-scrollbar-track { background: #0D0B14; } 
+        ::-webkit-scrollbar-thumb { background: #3A305A; border-radius: 4px; } 
+        ::-webkit-scrollbar-thumb:hover { background: #A755F7; }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <div id="authContainer">
+            </div>
+
+        <div id="appContent" class="hidden"> 
+            <header class="header py-4 mb-10"> <h1>Control Financiero y de Stock</h1>
+            </header>
+
+            <nav class="tabs-nav"> <button class="tab-button active" data-tab="finanzas">Control Financiero</button>
+                <button class="tab-button" data-tab="stock">Stock</button>
+            </nav>
+
+            <div id="seccionFinanzas" class="tab-content active pt-8"> 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8"> 
+                    <div class="card">
+                        <h2 id="formVentaTitle">Registrar Nueva Venta</h2>
+                        <form id="formVenta">
+                            <input type="hidden" id="editingVentaId" name="editingVentaId">
+                            <div><label for="ventaFecha">Fecha:</label><input type="date" id="ventaFecha" name="ventaFecha" required></div>
+                            <div>
+                                <label for="ventaProductoSeleccionado">Artículo de Stock Vendido:</label>
+                                <select id="ventaProductoSeleccionado" name="ventaProductoSeleccionado" required>
+                                    <option value="">Seleccione un artículo...</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label for="ventaCantidad">Cantidad Vendida:</label><input type="number" id="ventaCantidad" name="ventaCantidad" min="1" value="1" required></div>
+                                <div><label for="ventaPrecioUnitario">Precio Venta Unitario ($):</label><input type="number" id="ventaPrecioUnitario" name="ventaPrecioUnitario" min="0" step="0.01" placeholder="Ej: 25.00" required></div>
+                            </div>
+                            <div><label for="ventaTotal">Total Venta ($):</label><input type="text" id="ventaTotal" name="ventaTotal" readonly class="text-gray-700"></div>
+                            <div><label for="ventaNotas">Notas Adicionales:</label><textarea id="ventaNotas" name="ventaNotas" rows="2" placeholder="Detalles extra de la venta..."></textarea></div>
+                            <div class="flex gap-4 mt-6">
+                                <button type="submit" id="submitVentaButton" class="btn-primary w-full">Agregar Venta</button> 
+                                <button type="button" id="cancelEditVentaButton" class="btn-cancel w-full hidden">Cancelar Edición</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h2>Registrar Nuevo Gasto</h2>
+                        <form id="formGasto">
+                            <div><label for="gastoFecha">Fecha:</label><input type="date" id="gastoFecha" name="gastoFecha" required></div>
+                            <div><label for="gastoDescripcion">Descripción/Servicio:</label><input type="text" id="gastoDescripcion" name="gastoDescripcion" placeholder="Ej: Suscripción a software" required></div>
+                            <div><label for="gastoCategoria">Categoría:</label>
+                                <select id="gastoCategoria" name="gastoCategoria" required>
+                                    <option value="">Seleccione una categoría...</option>
+                                    <option value="proveedores">Proveedores</option><option value="software_suscripciones">Software y Suscripciones</option><option value="alquiler">Alquiler / Oficina</option><option value="servicios_publicos">Servicios Públicos</option><option value="marketing">Marketing y Publicidad</option><option value="salarios_colaboradores">Salarios / Colaboradores</option><option value="transporte_viajes">Transporte / Viajes</option><option value="impuestos_tasas">Impuestos y Tasas</option><option value="formacion_educacion">Formación y Educación</option><option value="equipamiento_hardware">Equipamiento / Hardware</option><option value="comisiones_bancarias">Comisiones Bancarias</option><option value="otros">Otros</option>
+                                </select>
+                            </div>
+                            <div><label for="gastoMonto">Monto Total ($):</label><input type="number" id="gastoMonto" name="gastoMonto" min="0" step="0.01" placeholder="Ej: 49.99" required></div>
+                            <div><label for="gastoNotas">Notas Adicionales:</label><textarea id="gastoNotas" name="gastoNotas" rows="2" placeholder="Detalles extra del gasto..."></textarea></div>
+                            <button type="submit" class="btn-primary w-full mt-6">Agregar Gasto</button> </form>
+                    </div>
+                </div>
+                <div class="card mb-8">
+                    <h2>Resumen Financiero</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8"> <div class="summary-item"><h3>Ingresos Totales</h3><p id="totalIngresos">$0.00</p></div>
+                        <div class="summary-item"><h3>Egresos Totales</h3><p id="totalEgresos">$0.00</p></div>
+                        <div class="summary-item"><h3>Balance General</h3><p id="balanceGeneral">$0.00</p></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8"> <div class="card"><h2>Listado de Ventas</h2><div id="listaVentas"><p class="text-gray-400">Aún no hay ventas registradas.</p></div></div>
+                    <div class="card"><h2>Listado de Gastos</h2><div id="listaGastos"><p class="text-gray-400">Aún no hay gastos registrados.</p></div></div>
+                </div>
+            </div>
+
+            <div id="seccionStock" class="tab-content pt-8"> 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8"> 
+                    <div class="card">
+                        <h2 id="formStockTitle">Registrar Artículo en Stock</h2>
+                        <form id="formStock">
+                            <input type="hidden" id="editingStockId" name="editingStockId">
+                            <div>
+                                <label for="stockNombre">Nombre del Artículo:</label>
+                                <input type="text" id="stockNombre" name="stockNombre" placeholder="Ej: Camiseta Negra Talla M" required>
+                            </div>
+                            <div>
+                                <label for="stockCantidad">Cantidad Actual:</label>
+                                <input type="number" id="stockCantidad" name="stockCantidad" min="0" placeholder="Ej: 50" required>
+                            </div>
+                             <div>
+                                <label for="stockNotas">Notas (Opcional):</label>
+                                <textarea id="stockNotas" name="stockNotas" rows="3" placeholder="Detalles como SKU, ubicación, proveedor..."></textarea>
+                            </div>
+                            <div class="flex gap-4 mt-6">
+                                <button type="submit" id="submitStockButton" class="btn-primary w-full">Agregar al Stock</button> 
+                                <button type="button" id="cancelEditStockButton" class="btn-cancel w-full hidden">Cancelar Edición</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h2>Listado de Stock</h2>
+                        <div id="listaStock">
+                            <p class="text-gray-400">Aún no hay artículos en stock.</p>
+                        </div>
+                    </div>
+                </div>
+            </div> 
+
+            <footer class="footer"> 
+                <p>ID de Usuario: <span id="userIdDisplay">N/A</span></p>
+                <p>&copy; <span id="currentYear"></span> Mi Negocio - Control Financiero y de Stock</p>
+            </footer>
+        </div> 
+    </div>
+
+    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-[#1A1629] p-6 rounded-lg shadow-xl max-w-sm w-full border border-[#3A305A]">
+            <h3 id="confirmModalTitle" class="text-lg font-semibold text-[#C879FF] mb-4">Confirmar Acción</h3>
+            <p id="confirmModalMessage" class="text-[#A09CB8] mb-6">¿Está seguro?</p>
+            <div class="flex justify-end space-x-3">
+                <button id="confirmModalCancel" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-md text-sm font-medium">Cancelar</button>
+                <button id="confirmModalConfirm" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md text-sm font-medium">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase SDK imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, collection, onSnapshot, query, deleteDoc, serverTimestamp, setLogLevel, updateDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js"; // Added increment, getDoc
+
+        // User-provided Firebase configuration (fallback)
+        const userProvidedConfig = {
+            apiKey: "AIzaSyDn6u2nWYahTsXUpxfadWJNkpyAHiSTA_s",
+            authDomain: "comet-v10.firebaseapp.com",
+            projectId: "comet-v10",
+            storageBucket: "comet-v10.firebasestorage.app",
+            messagingSenderId: "861183141332",
+            appId: "1:861183141332:web:1b256ba1e4b785bc29e241",
+            measurementId: "G-1TX5PQB72H"
+        };
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userProvidedConfig;
+        const firestoreAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; 
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        setLogLevel('info'); 
+
+        let currentUserId = null; 
+        let originalVentaDataForEdit = null; // To store original sale data when editing for stock adjustment
+        let ventasUnsubscribe = null, gastosUnsubscribe = null, stockUnsubscribe = null; 
+
+        // DOM Elements
+        const authContainer = document.getElementById('authContainer');
+        const appContent = document.getElementById('appContent');
+        const userIdDisplayFooter = document.getElementById('userIdDisplay');
+        
+        const formVentaTitle = document.getElementById('formVentaTitle');
+        const submitVentaButton = document.getElementById('submitVentaButton');
+        const cancelEditVentaButton = document.getElementById('cancelEditVentaButton');
+        const editingVentaIdInput = document.getElementById('editingVentaId');
+
+        const formStockTitle = document.getElementById('formStockTitle');
+        const submitStockButton = document.getElementById('submitStockButton');
+        const cancelEditStockButton = document.getElementById('cancelEditStockButton');
+        const editingStockIdInput = document.getElementById('editingStockId');
+
+
+        const tabButtons = document.querySelectorAll('.tab-button'); 
+        const tabContents = document.querySelectorAll('.tab-content'); 
+        const confirmModal = document.getElementById('confirmModal'), 
+              confirmModalTitle = document.getElementById('confirmModalTitle'), 
+              confirmModalMessage = document.getElementById('confirmModalMessage'), 
+              confirmModalCancel = document.getElementById('confirmModalCancel'), 
+              confirmModalConfirm = document.getElementById('confirmModalConfirm');
+        let confirmCallback = null;
+
+        // Tab navigation logic
+        tabButtons.forEach(button => { 
+            button.addEventListener('click', () => { 
+                tabButtons.forEach(btn => btn.classList.remove('active')); 
+                button.classList.add('active'); 
+                const targetTab = button.dataset.tab; 
+                tabContents.forEach(content => { 
+                    const sectionId = `seccion${targetTab.charAt(0).toUpperCase() + targetTab.slice(1)}`; 
+                    if (content.id === sectionId) { content.classList.add('active'); } 
+                    else { content.classList.remove('active'); } 
+                }); 
+            }); 
+        });
+        
+        // Confirmation Modal Logic
+        const showConfirmModal = (title, message, onConfirm) => { 
+            if(confirmModalTitle) confirmModalTitle.textContent = title; 
+            if(confirmModalMessage) confirmModalMessage.textContent = message; 
+            confirmCallback = onConfirm; 
+            if(confirmModal) confirmModal.classList.remove('hidden'); 
+        };
+        if(confirmModalCancel) confirmModalCancel.addEventListener('click', () => { 
+            if(confirmModal) confirmModal.classList.add('hidden'); 
+            confirmCallback = null; 
+        });
+        if(confirmModalConfirm) confirmModalConfirm.addEventListener('click', () => { 
+            if (confirmCallback) confirmCallback(); 
+            if(confirmModal) confirmModal.classList.add('hidden'); 
+            confirmCallback = null; 
+        });
+
+        // Update Auth UI
+        function updateAuthUI(user) {
+            if (!authContainer) return;
+            authContainer.innerHTML = ''; // Clear previous content
+
+            if (user) {
+                const userInfoDiv = document.createElement('div');
+                userInfoDiv.id = 'userInfo';
+                
+                const userImage = document.createElement('img');
+                userImage.src = user.photoURL || `https://placehold.co/24x24/7C3AED/FFFFFF?text=${user.email ? user.email[0].toUpperCase() : 'U'}`;
+                userImage.alt = 'User Avatar';
+                userImage.onerror = () => { userImage.src = `https://placehold.co/24x24/7C3AED/FFFFFF?text=${user.email ? user.email[0].toUpperCase() : 'U'}`; };
+
+
+                const userEmailSpan = document.createElement('span');
+                userEmailSpan.textContent = user.email;
+
+                userInfoDiv.appendChild(userImage);
+                userInfoDiv.appendChild(userEmailSpan);
+
+                const signOutBtn = document.createElement('button');
+                signOutBtn.id = 'signOutButton';
+                signOutBtn.className = 'btn-primary';
+                signOutBtn.textContent = 'Cerrar Sesión';
+                signOutBtn.style.padding = '0.5rem 1rem'; // Smaller padding
+                signOutBtn.style.fontSize = '0.9rem';    // Smaller font
+                signOutBtn.addEventListener('click', async () => {
+                    try {
+                        await signOut(auth);
+                    } catch (error) {
+                        console.error("Error al cerrar sesión:", error);
+                        showConfirmModal("Error", "No se pudo cerrar la sesión.", () => {});
+                    }
+                });
+                authContainer.appendChild(userInfoDiv);
+                authContainer.appendChild(signOutBtn);
+
+            } else {
+                const signInBtn = document.createElement('button');
+                signInBtn.id = 'googleSignInButton';
+                signInBtn.className = 'btn-google py-2 px-4 rounded-lg font-semibold shadow-md'; // Adjusted padding
+                signInBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="currentColor" style="width: 18px; height: 18px;">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        <path d="M1 1h22v22H1z" fill="none"/>
+                    </svg>
+                    <span>Iniciar Sesión</span>`;
+                signInBtn.addEventListener('click', async () => {
+                    try {
+                        await signInWithPopup(auth, provider);
+                    } catch (error) {
+                        console.error("Error durante el inicio de sesión con Google:", error);
+                        showConfirmModal("Error de Inicio de Sesión", `No se pudo iniciar sesión con Google: ${error.message}`, () => {});
+                    }
+                });
+                authContainer.appendChild(signInBtn);
+            }
+        }
+
+
+        // Firebase Authentication State Change Listener
+        onAuthStateChanged(auth, (user) => {
+            updateAuthUI(user); // Update the button/user info in the top-right
+
+            if (user) {
+                currentUserId = user.uid;
+                if (appContent) appContent.classList.remove('hidden');
+                if (userIdDisplayFooter) userIdDisplayFooter.textContent = currentUserId;
+                
+                console.log("Usuario autenticado con Google:", currentUserId, user.email);
+                cargarDatosFinancierosPublicos();
+                cargarStockPublico();
+            } else {
+                currentUserId = null;
+                if (appContent) appContent.classList.add('hidden');
+                if (userIdDisplayFooter) userIdDisplayFooter.textContent = 'N/A';
+
+                if (ventasUnsubscribe) ventasUnsubscribe();
+                if (gastosUnsubscribe) gastosUnsubscribe();
+                if (stockUnsubscribe) stockUnsubscribe();
+                currentVentas = []; currentGastos = []; currentStock = [];
+                mostrarVentas(currentVentas); mostrarGastos(currentGastos); mostrarStock(currentStock);
+                actualizarResumen();
+                actualizarDropdownProductos();
+                resetVentaForm();
+                resetStockForm();
+                console.log("Usuario no autenticado.");
+            }
+        });
+        
+        // Form and Input Element Selectors
+        const formVenta = document.getElementById('formVenta'), 
+              formGasto = document.getElementById('formGasto'), 
+              formStock = document.getElementById('formStock'); 
+        const ventaCantidadInput = document.getElementById('ventaCantidad'), 
+              ventaPrecioUnitarioInput = document.getElementById('ventaPrecioUnitario'), 
+              ventaTotalInput = document.getElementById('ventaTotal');
+        const ventaProductoSeleccionadoSelect = document.getElementById('ventaProductoSeleccionado');
+
+        // Helper function to calculate total sale amount
+        let calcularTotalVenta = () => { 
+            if (!ventaCantidadInput || !ventaPrecioUnitarioInput || !ventaTotalInput) return; 
+            const cantidad = parseFloat(ventaCantidadInput.value) || 0; 
+            const precioUnitario = parseFloat(ventaPrecioUnitarioInput.value) || 0; 
+            ventaTotalInput.value = (cantidad * precioUnitario).toFixed(2); 
+        };
+        if (ventaCantidadInput && ventaPrecioUnitarioInput) { 
+            ventaCantidadInput.addEventListener('input', calcularTotalVenta); 
+            ventaPrecioUnitarioInput.addEventListener('input', calcularTotalVenta); 
+        }
+        
+        // Helper function to set default dates for forms
+        let setDefaultDates = () => { 
+            const today = new Date().toISOString().split('T')[0]; 
+            const ventaFechaEl = document.getElementById('ventaFecha');
+            const gastoFechaEl = document.getElementById('gastoFecha');
+            if(ventaFechaEl) ventaFechaEl.value = today; 
+            if(gastoFechaEl) gastoFechaEl.value = today;
+        }; 
+        setDefaultDates();
+
+        // Firestore path helper for public data
+        const publicDataPath = (collectionName) => `artifacts/${firestoreAppId}/public/data/${collectionName}`;
+
+        // --- Venta Form Logic ---
+        function resetVentaForm() {
+            if (formVenta) formVenta.reset();
+            if (editingVentaIdInput) editingVentaIdInput.value = '';
+            if (formVentaTitle) formVentaTitle.textContent = 'Registrar Nueva Venta';
+            if (submitVentaButton) submitVentaButton.textContent = 'Agregar Venta';
+            if (cancelEditVentaButton) cancelEditVentaButton.classList.add('hidden');
+            setDefaultDates();
+            calcularTotalVenta();
+            originalVentaDataForEdit = null;
+            // Re-enable product select if it was disabled during edit
+            if (ventaProductoSeleccionadoSelect) ventaProductoSeleccionadoSelect.disabled = false;
+        }
+
+        if (cancelEditVentaButton) {
+            cancelEditVentaButton.addEventListener('click', resetVentaForm);
+        }
+
+        if (formVenta) {
+            formVenta.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!currentUserId) { 
+                    showConfirmModal("Error", "Debes iniciar sesión para esta acción.", () => {}); 
+                    return; 
+                }
+                
+                const productoSeleccionadoId = ventaProductoSeleccionadoSelect.value;
+                const productoSeleccionadoNombre = ventaProductoSeleccionadoSelect.options[ventaProductoSeleccionadoSelect.selectedIndex].text.split(' (Disp:')[0]; 
+                const cantidadVendida = parseInt(formVenta.ventaCantidad.value, 10);
+                const precioVentaUnitario = parseFloat(formVenta.ventaPrecioUnitario.value);
+                const totalVenta = cantidadVendida * precioVentaUnitario;
+                const ventaData = {
+                    fecha: formVenta.ventaFecha.value,
+                    stockItemId: productoSeleccionadoId, 
+                    descripcion: productoSeleccionadoNombre,
+                    cantidad: cantidadVendida,
+                    precioVentaUnitario: precioVentaUnitario,
+                    total: totalVenta, 
+                    notas: formVenta.ventaNotas.value,
+                    timestamp: serverTimestamp(),
+                    createdBy: currentUserId 
+                };
+
+                const editingId = editingVentaIdInput.value;
+
+                if (editingId) { // --- UPDATE VENTA ---
+                    try {
+                        // Stock adjustment logic for update
+                        const oldCantidad = originalVentaDataForEdit.cantidad;
+                        const oldStockItemId = originalVentaDataForEdit.stockItemId;
+                        let stockAdjustments = [];
+
+                        // 1. Add back old quantity to old stock item
+                        stockAdjustments.push(updateDoc(doc(db, publicDataPath('stock'), oldStockItemId), {
+                            cantidad: increment(oldCantidad)
+                        }));
+                        
+                        // 2. Check new stock item availability
+                        const newStockItemDoc = await getDoc(doc(db, publicDataPath('stock'), productoSeleccionadoId));
+                        if (!newStockItemDoc.exists() || newStockItemDoc.data().cantidad + oldCantidad < cantidadVendida) { // +oldCantidad because we virtually added it back
+                             // If the original item was the same as new, its current DB val is newStockItemDoc.data().cantidad
+                             // If we are changing TO this item, its current DB val is newStockItemDoc.data().cantidad
+                             // The available for new sale is (newStockItemDoc.data().cantidad + (oldStockItemId === productoSeleccionadoId ? oldCantidad : 0) )
+                            let currentAvailableForNewProduct = newStockItemDoc.data().cantidad;
+                            if (oldStockItemId === productoSeleccionadoId) { // if product is the same, we added back the old quantity
+                                currentAvailableForNewProduct += oldCantidad;
+                            }
+                            if (currentAvailableForNewProduct < cantidadVendida) {
+                                showConfirmModal("Error de Stock", `No hay suficiente stock para "${productoSeleccionadoNombre}" (${currentAvailableForNewProduct} disp.) al actualizar la venta. Se revirtió el stock original.`, () => {});
+                                // Revert the first stock adjustment if it happened
+                                await updateDoc(doc(db, publicDataPath('stock'), oldStockItemId), { cantidad: increment(-oldCantidad) });
+                                return;
+                            }
+                        }
+                         // 3. Deduct new quantity from new stock item
+                        stockAdjustments.push(updateDoc(doc(db, publicDataPath('stock'), productoSeleccionadoId), {
+                            cantidad: increment(-cantidadVendida)
+                        }));
+
+                        await Promise.all(stockAdjustments); // Perform stock adjustments
+                        await updateDoc(doc(db, publicDataPath('ventas'), editingId), ventaData); // Update sale
+                        resetVentaForm();
+                    } catch (error) {
+                        console.error("Error al actualizar venta o stock: ", error); 
+                        showConfirmModal("Error", "Ocurrió un error al actualizar la venta.", () => {}); 
+                    }
+                } else { // --- ADD NEW VENTA ---
+                    if (!productoSeleccionadoId) {
+                        showConfirmModal("Error", "Por favor, seleccione un artículo de stock.", () => {}); return;
+                    }
+                    const stockItem = currentStock.find(item => item.id === productoSeleccionadoId);
+                    if (!stockItem || stockItem.cantidad < cantidadVendida) {
+                        showConfirmModal("Error de Stock", `No hay suficiente stock para "${productoSeleccionadoNombre}". Disponible: ${stockItem ? stockItem.cantidad : 0}.`, () => {}); return;
+                    }
+                    try {
+                        await addDoc(collection(db, publicDataPath('ventas')), ventaData);
+                        await updateDoc(doc(db, publicDataPath('stock'), productoSeleccionadoId), {
+                            cantidad: increment(-cantidadVendida)
+                        });
+                        resetVentaForm();
+                    } catch (error) { 
+                        console.error("Error al guardar venta o actualizar stock: ", error); 
+                        showConfirmModal("Error", "Ocurrió un error al procesar la venta.", () => {}); 
+                    }
+                }
+            });
+        }
+
+        // --- Stock Form Logic ---
+        function resetStockForm() {
+            if(formStock) formStock.reset();
+            if(editingStockIdInput) editingStockIdInput.value = '';
+            if(formStockTitle) formStockTitle.textContent = 'Registrar Artículo en Stock';
+            if(submitStockButton) submitStockButton.textContent = 'Agregar al Stock';
+            if(cancelEditStockButton) cancelEditStockButton.classList.add('hidden');
+        }
+
+        if(cancelEditStockButton) {
+            cancelEditStockButton.addEventListener('click', resetStockForm);
+        }
+
+        if (formStock) { 
+            formStock.addEventListener('submit', async (e) => { 
+                e.preventDefault(); 
+                if (!currentUserId) { 
+                    showConfirmModal("Error", "Debes iniciar sesión para esta acción.", () => {}); 
+                    return; 
+                } 
+                const stockData = { 
+                    nombre: formStock.stockNombre.value, 
+                    cantidad: parseInt(formStock.stockCantidad.value, 10), 
+                    notas: formStock.stockNotas.value, 
+                    timestamp: serverTimestamp(), 
+                    createdBy: currentUserId 
+                }; 
+                const editingId = editingStockIdInput.value;
+
+                try { 
+                    if (editingId) { // UPDATE STOCK
+                        await updateDoc(doc(db, publicDataPath('stock'), editingId), stockData);
+                    } else { // ADD NEW STOCK
+                        await addDoc(collection(db, publicDataPath('stock')), stockData);
+                    }
+                    resetStockForm();
+                } catch (error) { 
+                    console.error("Error con artículo de stock:", error); 
+                    showConfirmModal("Error", "Ocurrió un error al guardar el artículo.", () => {}); 
+                } 
+            }); 
+        }
+
+        let currentVentas = [], currentGastos = [], currentStock = []; 
+
+        // Function to load PUBLIC financial data
+        let cargarDatosFinancierosPublicos = () => { 
+            if(!currentUserId) return;
+            const ventasQuery = query(collection(db, publicDataPath('ventas'))); 
+            if(ventasUnsubscribe) ventasUnsubscribe();
+            ventasUnsubscribe = onSnapshot(ventasQuery, snapshot => { 
+                currentVentas = snapshot.docs.map(d=>({id:d.id,...d.data()})); 
+                currentVentas.sort((a,b)=>(b.timestamp&&a.timestamp)?b.timestamp.toMillis()-a.timestamp.toMillis():new Date(b.fecha)-new Date(a.fecha)); 
+                mostrarVentas(currentVentas); 
+                actualizarResumen();
+            }, error => { console.error("Error cargando ventas públicas:", error); }); 
+
+            const gastosQuery = query(collection(db, publicDataPath('gastos'))); 
+            if(gastosUnsubscribe) gastosUnsubscribe();
+            gastosUnsubscribe = onSnapshot(gastosQuery, snapshot => {
+                currentGastos = snapshot.docs.map(d=>({id:d.id,...d.data()})); 
+                currentGastos.sort((a,b)=>(b.timestamp&&a.timestamp)?b.timestamp.toMillis()-a.timestamp.toMillis():new Date(b.fecha)-new Date(a.fecha)); 
+                mostrarGastos(currentGastos); 
+                actualizarResumen();
+            }, error => { console.error("Error cargando gastos públicos:", error); });
+        };
+        
+        // Function to load PUBLIC stock data
+        function cargarStockPublico() {
+            if (!currentUserId) return;
+            const stockQuery = query(collection(db, publicDataPath('stock')));
+            if (stockUnsubscribe) stockUnsubscribe(); 
+            stockUnsubscribe = onSnapshot(stockQuery, (snapshot) => {
+                currentStock = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+                currentStock.sort((a, b) => (a.nombre && b.nombre) ? a.nombre.localeCompare(b.nombre) : 0);
+                mostrarStock(currentStock);
+                actualizarDropdownProductos(); 
+            }, (error) => { console.error("Error al obtener stock público: ", error); });
+        }
+
+        // Function to populate the product dropdown
+        function actualizarDropdownProductos() {
+            if (!ventaProductoSeleccionadoSelect) return;
+            const valorSeleccionadoPreviamente = ventaProductoSeleccionadoSelect.value; 
+            ventaProductoSeleccionadoSelect.innerHTML = '<option value="">Seleccione un artículo...</option>'; 
+            currentStock.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id; 
+                option.textContent = `${item.nombre} (Disp: ${item.cantidad})`; 
+                option.disabled = item.cantidad === 0 && !(editingVentaIdInput.value && originalVentaDataForEdit && originalVentaDataForEdit.stockItemId === item.id); // Allow selecting if it's the item being edited, even if 0
+                ventaProductoSeleccionadoSelect.appendChild(option);
+            });
+            if (valorSeleccionadoPreviamente && ventaProductoSeleccionadoSelect.querySelector(`option[value="${valorSeleccionadoPreviamente}"]`)) {
+                ventaProductoSeleccionadoSelect.value = valorSeleccionadoPreviamente;
+            }
+        }
+
+        // UI Display functions
+        let mostrarVentas = (ventas) => { 
+            const div = document.getElementById('listaVentas'); 
+            if (!div) return; 
+            div.innerHTML = ventas.length === 0 ? '<p class="text-gray-400">Aún no hay ventas registradas.</p>' : ''; 
+            ventas.forEach(v => { 
+                const item = document.createElement('div'); 
+                item.className = 'list-item'; 
+                item.innerHTML = `
+                    <p><strong>Fecha:</strong> ${v.fecha}</p>
+                    <p><strong>Artículo:</strong> ${v.descripcion || 'N/A'}</p>
+                    <p><strong>Cant:</strong> ${v.cantidad} x $${parseFloat(v.precioVentaUnitario || 0).toFixed(2)} c/u</p>
+                    <p><strong>Total Venta:</strong> $${parseFloat(v.total || 0).toFixed(2)}</p>
+                    ${v.notas ? `<p><strong>Notas:</strong> ${v.notas}</p>` : ''}
+                    ${v.createdBy ? `<p class="text-xs text-gray-500 pt-1">Registrado por: ${v.createdBy.substring(0,8)}...</p>`: ''}
+                    <div class="actions mt-2 flex gap-2">
+                        <button data-tipo="ventas" data-id="${v.id}" class="edit-button btn-secondary">Editar</button>
+                        <button data-tipo="ventas" data-id="${v.id}" class="delete-button">Eliminar</button>
+                    </div>`; 
+                div.appendChild(item); 
+            }); 
+        };
+
+        let mostrarGastos = (gastos) => { 
+            const d = document.getElementById('listaGastos'); 
+            if(!d) return; 
+            d.innerHTML = gastos.length === 0 ? '<p class="text-gray-400">Aún no hay gastos registrados.</p>' : ''; 
+            gastos.forEach(g => { 
+                const i = document.createElement('div'); 
+                i.className = 'list-item'; 
+                const categoriaDisplay = g.categoria ? g.categoria.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase()) : 'N/A';
+                i.innerHTML = `
+                    <p><strong>Fecha:</strong> ${g.fecha}</p>
+                    <p><strong>Descripción:</strong> ${g.descripcion}</p>
+                    <p><strong>Categoría:</strong> ${categoriaDisplay}</p>
+                    <p><strong>Monto:</strong> $${parseFloat(g.monto || 0).toFixed(2)}</p>
+                    ${g.notas?`<p><strong>Notas:</strong> ${g.notas}</p>`:''}
+                    ${g.createdBy ? `<p class="text-xs text-gray-500 pt-1">Registrado por: ${g.createdBy.substring(0,8)}...</p>`: ''}
+                    <div class="actions mt-2 flex gap-2">
+                        <button data-tipo="gastos" data-id="${g.id}" class="delete-button">Eliminar</button>
+                    </div>`; 
+                d.appendChild(i); 
+            });
+        };
+
+        let mostrarStock = (stockItems) => { 
+            const listaStockDiv = document.getElementById('listaStock'); 
+            if (!listaStockDiv) return; 
+            listaStockDiv.innerHTML = ''; 
+            if (stockItems.length === 0) { 
+                listaStockDiv.innerHTML = '<p class="text-gray-400">Aún no hay artículos en stock.</p>'; 
+                return; 
+            } 
+            stockItems.forEach(item => { 
+                const itemDiv = document.createElement('div'); 
+                itemDiv.className = 'list-item'; 
+                itemDiv.innerHTML = `
+                    <p><strong>Nombre:</strong> ${item.nombre}</p>
+                    <p><strong>Cantidad:</strong> ${item.cantidad}</p>
+                    ${item.notas ? `<p><strong>Notas:</strong> ${item.notas}</p>` : ''}
+                    ${item.createdBy ? `<p class="text-xs text-gray-500 pt-1">Registrado por: ${item.createdBy.substring(0,8)}...</p>`: ''}
+                    <div class="actions mt-2 flex gap-2">
+                        <button data-tipo="stock" data-id="${item.id}" class="edit-button btn-secondary">Editar</button>
+                        <button data-tipo="stock" data-id="${item.id}" class="delete-button">Eliminar</button>
+                    </div>`; 
+                listaStockDiv.appendChild(itemDiv); 
+            }); 
+        };
+        
+        // Event delegation for delete and edit buttons
+        document.addEventListener('click', async function(event) { 
+            const target = event.target;
+            if (target && target.classList.contains('delete-button')) { 
+                const tipo = target.dataset.tipo; 
+                const docId = target.dataset.id; 
+                if (tipo && docId) { handleDeleteDocument(tipo, docId); } 
+            }
+            if (target && target.classList.contains('edit-button')) {
+                const tipo = target.dataset.tipo;
+                const docId = target.dataset.id;
+                if (tipo === 'ventas') await handleEditVenta(docId);
+                if (tipo === 'stock') handleEditStock(docId);
+            }
+        });
+
+        // --- Edit Handlers ---
+        async function handleEditVenta(ventaId) {
+            const venta = currentVentas.find(v => v.id === ventaId);
+            if (!venta) { console.error("Venta no encontrada para editar"); return; }
+            
+            originalVentaDataForEdit = {...venta}; // Store original data for stock adjustment
+
+            if(editingVentaIdInput) editingVentaIdInput.value = ventaId;
+            if(formVentaTitle) formVentaTitle.textContent = 'Editar Venta';
+            if(submitVentaButton) submitVentaButton.textContent = 'Actualizar Venta';
+            if(cancelEditVentaButton) cancelEditVentaButton.classList.remove('hidden');
+
+            if(formVenta.ventaFecha) formVenta.ventaFecha.value = venta.fecha;
+            if(ventaProductoSeleccionadoSelect) {
+                ventaProductoSeleccionadoSelect.value = venta.stockItemId;
+                // IMPORTANT: For sale edit, we disallow changing the product to simplify stock logic.
+                // If you want to allow changing product, the stock adjustment logic in formVenta submit needs to be more complex.
+                // ventaProductoSeleccionadoSelect.disabled = true; 
+            }
+            if(formVenta.ventaCantidad) formVenta.ventaCantidad.value = venta.cantidad;
+            if(formVenta.ventaPrecioUnitario) formVenta.ventaPrecioUnitario.value = venta.precioVentaUnitario;
+            if(formVenta.ventaNotas) formVenta.ventaNotas.value = venta.notas;
+            calcularTotalVenta();
+            formVenta.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function handleEditStock(stockId) {
+            const stockItem = currentStock.find(s => s.id === stockId);
+            if (!stockItem) { console.error("Artículo de stock no encontrado para editar"); return; }
+
+            if(editingStockIdInput) editingStockIdInput.value = stockId;
+            if(formStockTitle) formStockTitle.textContent = 'Editar Artículo de Stock';
+            if(submitStockButton) submitStockButton.textContent = 'Actualizar Artículo';
+            if(cancelEditStockButton) cancelEditStockButton.classList.remove('hidden');
+
+            if(formStock.stockNombre) formStock.stockNombre.value = stockItem.nombre;
+            if(formStock.stockCantidad) formStock.stockCantidad.value = stockItem.cantidad;
+            if(formStock.stockNotas) formStock.stockNotas.value = stockItem.notas;
+            formStock.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Function to handle document deletion from Firestore
+        let handleDeleteDocument = (tipo, docId) => { 
+            if (!currentUserId) { 
+                showConfirmModal("Error", "Debes iniciar sesión para eliminar.", () => {}); 
+                return; 
+            } 
+            const itemName = tipo === 'ventas' ? 'venta' : tipo === 'gastos' ? 'gasto' : 'artículo de stock'; 
+            showConfirmModal( 
+                `Confirmar Eliminación`, 
+                `¿Está seguro que desea eliminar este ${itemName}? Esta acción no se puede deshacer. Si elimina una venta, el stock NO se reajustará automáticamente.`, 
+                async () => { 
+                    try { 
+                        if (tipo === 'ventas') {
+                            // Optionally, before deleting a sale, you might want to re-add its quantity to stock.
+                            // const ventaDoc = await getDoc(doc(db, publicDataPath('ventas'), docId));
+                            // if (ventaDoc.exists()) {
+                            // const ventaData = ventaDoc.data();
+                            // await updateDoc(doc(db, publicDataPath('stock'), ventaData.stockItemId), { cantidad: increment(ventaData.cantidad) });
+                            // }
+                            // For now, deleting a sale does not auto-adjust stock to keep it simpler. User needs to be aware.
+                        }
+                        await deleteDoc(doc(db, publicDataPath(tipo), docId)); 
+                        // If the deleted item was being edited, reset the form
+                        if (tipo === 'ventas' && editingVentaIdInput.value === docId) resetVentaForm();
+                        if (tipo === 'stock' && editingStockIdInput.value === docId) resetStockForm();
+
+                    } catch (error) { 
+                        console.error(`Error al eliminar ${itemName} público:`, error); 
+                        showConfirmModal("Error", `Ocurrió un error al eliminar el ${itemName}.`, () => {}); 
+                    } 
+                }
+            ); 
+        };
+        
+        // Function to update the financial summary display
+        let actualizarResumen = () => { 
+            const totalIngresos = currentVentas.reduce((sum, v) => sum + parseFloat(v.total || 0), 0); 
+            const totalEgresos = currentGastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0); 
+            const balanceGeneral = totalIngresos - totalEgresos; 
+            
+            const totalIngresosEl = document.getElementById('totalIngresos'), 
+                  totalEgresosEl = document.getElementById('totalEgresos'), 
+                  balanceGeneralEl = document.getElementById('balanceGeneral'); 
+            
+            if(totalIngresosEl) totalIngresosEl.textContent = `$${totalIngresos.toFixed(2)}`; 
+            if(totalEgresosEl) totalEgresosEl.textContent = `$${totalEgresos.toFixed(2)}`; 
+            if(balanceGeneralEl) { 
+                balanceGeneralEl.textContent = `$${balanceGeneral.toFixed(2)}`; 
+                balanceGeneralEl.style.color = balanceGeneral >= 0 ? '#4ade80' : '#f87171'; 
+            }
+        };
+        
+        const currentYearEl = document.getElementById('currentYear');
+        if(currentYearEl) currentYearEl.textContent = new Date().getFullYear();
+
+    </script>
+</body>
+</html>
