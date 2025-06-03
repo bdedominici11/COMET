@@ -259,7 +259,8 @@
     <div class="container mx-auto p-4 sm:p-6 lg:p-8">
         
         <div id="authContainer">
-            </div>
+            <!-- Auth buttons will be injected here -->
+        </div>
 
         <div id="appContent" class="hidden"> 
             <header class="header py-4 mb-10"> <h1>Control Financiero y de Stock</h1>
@@ -280,6 +281,7 @@
                                 <label for="ventaProductoSeleccionado">Artículo de Stock Vendido:</label>
                                 <select id="ventaProductoSeleccionado" name="ventaProductoSeleccionado" required>
                                     <option value="">Seleccione un artículo...</option>
+                                    <!-- Options will be populated by JS -->
                                 </select>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
@@ -351,6 +353,7 @@
                         <h2>Listado de Stock</h2>
                         <div id="listaStock">
                             <p class="text-gray-400">Aún no hay artículos en stock.</p>
+                            <!-- Stock items will be listed here by JS -->
                         </div>
                     </div>
                 </div>
@@ -377,11 +380,12 @@
     <script type="module">
         // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-        import { getFirestore, doc, addDoc, collection, onSnapshot, query, deleteDoc, serverTimestamp, setLogLevel, updateDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js"; // Added increment, getDoc
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js"; // Added signInWithCustomToken, signInAnonymously
+        import { getFirestore, doc, addDoc, collection, onSnapshot, query, deleteDoc, serverTimestamp, setLogLevel, updateDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
-        // User-provided Firebase configuration (fallback)
-        const userProvidedConfig = {
+        // --- Firebase Configuration ---
+        // Use __firebase_config if available (provided by Canvas environment), otherwise fall back to user-provided.
+        const userProvidedConfig = { // This is a fallback if __firebase_config is not defined
             apiKey: "AIzaSyDn6u2nWYahTsXUpxfadWJNkpyAHiSTA_s",
             authDomain: "comet-v10.firebaseapp.com",
             projectId: "comet-v10",
@@ -390,21 +394,23 @@
             appId: "1:861183141332:web:1b256ba1e4b785bc29e241",
             measurementId: "G-1TX5PQB72H"
         };
-
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userProvidedConfig;
         const firestoreAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; 
         
+        // --- Initialize Firebase ---
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
-        setLogLevel('info'); 
+        const provider = new GoogleAuthProvider(); // For Google Sign-In
+        setLogLevel('info'); // Firebase logging level, can be 'debug' for more details
 
+        // --- Global Variables ---
         let currentUserId = null; 
         let originalVentaDataForEdit = null; // To store original sale data when editing for stock adjustment
         let ventasUnsubscribe = null, gastosUnsubscribe = null, stockUnsubscribe = null; 
+        let currentVentas = [], currentGastos = [], currentStock = []; 
 
-        // DOM Elements
+        // --- DOM Elements ---
         const authContainer = document.getElementById('authContainer');
         const appContent = document.getElementById('appContent');
         const userIdDisplayFooter = document.getElementById('userIdDisplay');
@@ -419,7 +425,6 @@
         const cancelEditStockButton = document.getElementById('cancelEditStockButton');
         const editingStockIdInput = document.getElementById('editingStockId');
 
-
         const tabButtons = document.querySelectorAll('.tab-button'); 
         const tabContents = document.querySelectorAll('.tab-content'); 
         const confirmModal = document.getElementById('confirmModal'), 
@@ -429,7 +434,16 @@
               confirmModalConfirm = document.getElementById('confirmModalConfirm');
         let confirmCallback = null;
 
-        // Tab navigation logic
+        // Form and Input Element Selectors
+        const formVenta = document.getElementById('formVenta'), 
+              formGasto = document.getElementById('formGasto'), 
+              formStock = document.getElementById('formStock'); 
+        const ventaCantidadInput = document.getElementById('ventaCantidad'), 
+              ventaPrecioUnitarioInput = document.getElementById('ventaPrecioUnitario'), 
+              ventaTotalInput = document.getElementById('ventaTotal');
+        const ventaProductoSeleccionadoSelect = document.getElementById('ventaProductoSeleccionado');
+
+        // --- Tab Navigation Logic ---
         tabButtons.forEach(button => { 
             button.addEventListener('click', () => { 
                 tabButtons.forEach(btn => btn.classList.remove('active')); 
@@ -443,7 +457,7 @@
             }); 
         });
         
-        // Confirmation Modal Logic
+        // --- Confirmation Modal Logic ---
         const showConfirmModal = (title, message, onConfirm) => { 
             if(confirmModalTitle) confirmModalTitle.textContent = title; 
             if(confirmModalMessage) confirmModalMessage.textContent = message; 
@@ -460,7 +474,7 @@
             confirmCallback = null; 
         });
 
-        // Update Auth UI
+        // --- Update Auth UI ---
         function updateAuthUI(user) {
             if (!authContainer) return;
             authContainer.innerHTML = ''; // Clear previous content
@@ -474,9 +488,8 @@
                 userImage.alt = 'User Avatar';
                 userImage.onerror = () => { userImage.src = `https://placehold.co/24x24/7C3AED/FFFFFF?text=${user.email ? user.email[0].toUpperCase() : 'U'}`; };
 
-
                 const userEmailSpan = document.createElement('span');
-                userEmailSpan.textContent = user.email;
+                userEmailSpan.textContent = user.email || "Usuario Anónimo"; // Handle anonymous users
 
                 userInfoDiv.appendChild(userImage);
                 userInfoDiv.appendChild(userEmailSpan);
@@ -485,8 +498,8 @@
                 signOutBtn.id = 'signOutButton';
                 signOutBtn.className = 'btn-primary';
                 signOutBtn.textContent = 'Cerrar Sesión';
-                signOutBtn.style.padding = '0.5rem 1rem'; // Smaller padding
-                signOutBtn.style.fontSize = '0.9rem';    // Smaller font
+                signOutBtn.style.padding = '0.5rem 1rem'; 
+                signOutBtn.style.fontSize = '0.9rem';   
                 signOutBtn.addEventListener('click', async () => {
                     try {
                         await signOut(auth);
@@ -501,7 +514,7 @@
             } else {
                 const signInBtn = document.createElement('button');
                 signInBtn.id = 'googleSignInButton';
-                signInBtn.className = 'btn-google py-2 px-4 rounded-lg font-semibold shadow-md'; // Adjusted padding
+                signInBtn.className = 'btn-google py-2 px-4 rounded-lg font-semibold shadow-md';
                 signInBtn.innerHTML = `
                     <svg viewBox="0 0 24 24" fill="currentColor" style="width: 18px; height: 18px;">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -510,7 +523,7 @@
                         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                         <path d="M1 1h22v22H1z" fill="none"/>
                     </svg>
-                    <span>Iniciar Sesión</span>`;
+                    <span>Iniciar Sesión con Google</span>`;
                 signInBtn.addEventListener('click', async () => {
                     try {
                         await signInWithPopup(auth, provider);
@@ -523,47 +536,70 @@
             }
         }
 
-
-        // Firebase Authentication State Change Listener
-        onAuthStateChanged(auth, (user) => {
-            updateAuthUI(user); // Update the button/user info in the top-right
-
+        // --- Firebase Authentication State Change Listener ---
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUserId = user.uid;
                 if (appContent) appContent.classList.remove('hidden');
                 if (userIdDisplayFooter) userIdDisplayFooter.textContent = currentUserId;
                 
-                console.log("Usuario autenticado con Google:", currentUserId, user.email);
+                console.log("Usuario autenticado:", currentUserId, user.email || "Anónimo");
+                updateAuthUI(user); // Update UI with user info
                 cargarDatosFinancierosPublicos();
                 cargarStockPublico();
             } else {
-                currentUserId = null;
-                if (appContent) appContent.classList.add('hidden');
-                if (userIdDisplayFooter) userIdDisplayFooter.textContent = 'N/A';
-
-                if (ventasUnsubscribe) ventasUnsubscribe();
-                if (gastosUnsubscribe) gastosUnsubscribe();
-                if (stockUnsubscribe) stockUnsubscribe();
-                currentVentas = []; currentGastos = []; currentStock = [];
-                mostrarVentas(currentVentas); mostrarGastos(currentGastos); mostrarStock(currentStock);
-                actualizarResumen();
-                actualizarDropdownProductos();
-                resetVentaForm();
-                resetStockForm();
-                console.log("Usuario no autenticado.");
+                 // Try to sign in with custom token if available, otherwise sign in anonymously
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                        // onAuthStateChanged will be triggered again if successful
+                        console.log("Intentando inicio de sesión con token personalizado...");
+                    } catch (error) {
+                        console.error("Error con token personalizado, intentando anónimo:", error);
+                        try {
+                            await signInAnonymously(auth);
+                            // onAuthStateChanged will be triggered again
+                            console.log("Intentando inicio de sesión anónimo...");
+                        } catch (anonError) {
+                            console.error("Error al iniciar sesión anónimamente:", anonError);
+                            currentUserId = null;
+                            if (appContent) appContent.classList.add('hidden');
+                            if (userIdDisplayFooter) userIdDisplayFooter.textContent = 'N/A';
+                            updateAuthUI(null); // Update UI for signed-out state
+                            cleanupListenersAndData();
+                        }
+                    }
+                } else {
+                     try {
+                        await signInAnonymously(auth);
+                        console.log("Intentando inicio de sesión anónimo (sin token personalizado)...");
+                        // onAuthStateChanged will be triggered again if successful
+                    } catch (error) {
+                        console.error("Error al iniciar sesión anónimamente (sin token personalizado):", error);
+                        currentUserId = null;
+                        if (appContent) appContent.classList.add('hidden');
+                        if (userIdDisplayFooter) userIdDisplayFooter.textContent = 'N/A';
+                        updateAuthUI(null);
+                        cleanupListenersAndData();
+                    }
+                }
             }
         });
-        
-        // Form and Input Element Selectors
-        const formVenta = document.getElementById('formVenta'), 
-              formGasto = document.getElementById('formGasto'), 
-              formStock = document.getElementById('formStock'); 
-        const ventaCantidadInput = document.getElementById('ventaCantidad'), 
-              ventaPrecioUnitarioInput = document.getElementById('ventaPrecioUnitario'), 
-              ventaTotalInput = document.getElementById('ventaTotal');
-        const ventaProductoSeleccionadoSelect = document.getElementById('ventaProductoSeleccionado');
 
-        // Helper function to calculate total sale amount
+        function cleanupListenersAndData() {
+            if (ventasUnsubscribe) ventasUnsubscribe();
+            if (gastosUnsubscribe) gastosUnsubscribe();
+            if (stockUnsubscribe) stockUnsubscribe();
+            currentVentas = []; currentGastos = []; currentStock = [];
+            mostrarVentas(currentVentas); mostrarGastos(currentGastos); mostrarStock(currentStock);
+            actualizarResumen();
+            actualizarDropdownProductos();
+            resetVentaForm();
+            resetStockForm();
+            console.log("Listeners y datos limpiados.");
+        }
+        
+        // --- Helper function to calculate total sale amount ---
         let calcularTotalVenta = () => { 
             if (!ventaCantidadInput || !ventaPrecioUnitarioInput || !ventaTotalInput) return; 
             const cantidad = parseFloat(ventaCantidadInput.value) || 0; 
@@ -575,7 +611,7 @@
             ventaPrecioUnitarioInput.addEventListener('input', calcularTotalVenta); 
         }
         
-        // Helper function to set default dates for forms
+        // --- Helper function to set default dates for forms ---
         let setDefaultDates = () => { 
             const today = new Date().toISOString().split('T')[0]; 
             const ventaFechaEl = document.getElementById('ventaFecha');
@@ -585,7 +621,7 @@
         }; 
         setDefaultDates();
 
-        // Firestore path helper for public data
+        // --- Firestore path helper for public data ---
         const publicDataPath = (collectionName) => `artifacts/${firestoreAppId}/public/data/${collectionName}`;
 
         // --- Venta Form Logic ---
@@ -598,7 +634,6 @@
             setDefaultDates();
             calcularTotalVenta();
             originalVentaDataForEdit = null;
-            // Re-enable product select if it was disabled during edit
             if (ventaProductoSeleccionadoSelect) ventaProductoSeleccionadoSelect.disabled = false;
         }
 
@@ -635,40 +670,31 @@
 
                 if (editingId) { // --- UPDATE VENTA ---
                     try {
-                        // Stock adjustment logic for update
                         const oldCantidad = originalVentaDataForEdit.cantidad;
                         const oldStockItemId = originalVentaDataForEdit.stockItemId;
-                        let stockAdjustments = [];
-
-                        // 1. Add back old quantity to old stock item
-                        stockAdjustments.push(updateDoc(doc(db, publicDataPath('stock'), oldStockItemId), {
-                            cantidad: increment(oldCantidad)
-                        }));
                         
-                        // 2. Check new stock item availability
+                        // Revert old stock quantity
+                        await updateDoc(doc(db, publicDataPath('stock'), oldStockItemId), {
+                            cantidad: increment(oldCantidad)
+                        });
+                        
+                        // Check new stock item availability (after reverting old one)
                         const newStockItemDoc = await getDoc(doc(db, publicDataPath('stock'), productoSeleccionadoId));
-                        if (!newStockItemDoc.exists() || newStockItemDoc.data().cantidad + oldCantidad < cantidadVendida) { // +oldCantidad because we virtually added it back
-                             // If the original item was the same as new, its current DB val is newStockItemDoc.data().cantidad
-                             // If we are changing TO this item, its current DB val is newStockItemDoc.data().cantidad
-                             // The available for new sale is (newStockItemDoc.data().cantidad + (oldStockItemId === productoSeleccionadoId ? oldCantidad : 0) )
-                            let currentAvailableForNewProduct = newStockItemDoc.data().cantidad;
-                            if (oldStockItemId === productoSeleccionadoId) { // if product is the same, we added back the old quantity
-                                currentAvailableForNewProduct += oldCantidad;
-                            }
-                            if (currentAvailableForNewProduct < cantidadVendida) {
-                                showConfirmModal("Error de Stock", `No hay suficiente stock para "${productoSeleccionadoNombre}" (${currentAvailableForNewProduct} disp.) al actualizar la venta. Se revirtió el stock original.`, () => {});
-                                // Revert the first stock adjustment if it happened
-                                await updateDoc(doc(db, publicDataPath('stock'), oldStockItemId), { cantidad: increment(-oldCantidad) });
-                                return;
-                            }
-                        }
-                         // 3. Deduct new quantity from new stock item
-                        stockAdjustments.push(updateDoc(doc(db, publicDataPath('stock'), productoSeleccionadoId), {
-                            cantidad: increment(-cantidadVendida)
-                        }));
+                        let availableAfterRevert = newStockItemDoc.exists() ? newStockItemDoc.data().cantidad : 0;
 
-                        await Promise.all(stockAdjustments); // Perform stock adjustments
-                        await updateDoc(doc(db, publicDataPath('ventas'), editingId), ventaData); // Update sale
+                        if (availableAfterRevert < cantidadVendida) {
+                             showConfirmModal("Error de Stock", `No hay suficiente stock para "${productoSeleccionadoNombre}" (${availableAfterRevert} disp.) al actualizar. Se revirtió el stock original.`, () => {});
+                             // Rollback the revert: deduct the old quantity again from the old item
+                             await updateDoc(doc(db, publicDataPath('stock'), oldStockItemId), { cantidad: increment(-oldCantidad) });
+                             return;
+                        }
+
+                        // Deduct new quantity from new stock item
+                        await updateDoc(doc(db, publicDataPath('stock'), productoSeleccionadoId), {
+                            cantidad: increment(-cantidadVendida)
+                        });
+                        
+                        await updateDoc(doc(db, publicDataPath('ventas'), editingId), ventaData); 
                         resetVentaForm();
                     } catch (error) {
                         console.error("Error al actualizar venta o stock: ", error); 
@@ -695,6 +721,38 @@
                 }
             });
         }
+
+        // --- Gasto Form Logic (CORRECTED) ---
+        if (formGasto) {
+            formGasto.addEventListener('submit', async (e) => {
+                e.preventDefault(); // Prevent default form submission which causes page refresh
+                if (!currentUserId) {
+                    showConfirmModal("Error", "Debes iniciar sesión para registrar un gasto.", () => {});
+                    return;
+                }
+
+                const gastoData = {
+                    fecha: formGasto.gastoFecha.value,
+                    descripcion: formGasto.gastoDescripcion.value,
+                    categoria: formGasto.gastoCategoria.value,
+                    monto: parseFloat(formGasto.gastoMonto.value),
+                    notas: formGasto.gastoNotas.value,
+                    timestamp: serverTimestamp(),
+                    createdBy: currentUserId
+                };
+
+                try {
+                    await addDoc(collection(db, publicDataPath('gastos')), gastoData);
+                    formGasto.reset(); // Reset form fields
+                    setDefaultDates(); // Set default date again after reset
+                    // The onSnapshot listener for gastos will automatically update the list
+                } catch (error) {
+                    console.error("Error al guardar el gasto:", error);
+                    showConfirmModal("Error", "Ocurrió un error al guardar el gasto.", () => {});
+                }
+            });
+        }
+
 
         // --- Stock Form Logic ---
         function resetStockForm() {
@@ -738,14 +796,13 @@
                 } 
             }); 
         }
-
-        let currentVentas = [], currentGastos = [], currentStock = []; 
-
-        // Function to load PUBLIC financial data
+        
+        // --- Function to load PUBLIC financial data ---
         let cargarDatosFinancierosPublicos = () => { 
             if(!currentUserId) return;
+            // Ventas
             const ventasQuery = query(collection(db, publicDataPath('ventas'))); 
-            if(ventasUnsubscribe) ventasUnsubscribe();
+            if(ventasUnsubscribe) ventasUnsubscribe(); // Unsubscribe from previous listener if exists
             ventasUnsubscribe = onSnapshot(ventasQuery, snapshot => { 
                 currentVentas = snapshot.docs.map(d=>({id:d.id,...d.data()})); 
                 currentVentas.sort((a,b)=>(b.timestamp&&a.timestamp)?b.timestamp.toMillis()-a.timestamp.toMillis():new Date(b.fecha)-new Date(a.fecha)); 
@@ -753,8 +810,9 @@
                 actualizarResumen();
             }, error => { console.error("Error cargando ventas públicas:", error); }); 
 
+            // Gastos
             const gastosQuery = query(collection(db, publicDataPath('gastos'))); 
-            if(gastosUnsubscribe) gastosUnsubscribe();
+            if(gastosUnsubscribe) gastosUnsubscribe(); // Unsubscribe from previous listener
             gastosUnsubscribe = onSnapshot(gastosQuery, snapshot => {
                 currentGastos = snapshot.docs.map(d=>({id:d.id,...d.data()})); 
                 currentGastos.sort((a,b)=>(b.timestamp&&a.timestamp)?b.timestamp.toMillis()-a.timestamp.toMillis():new Date(b.fecha)-new Date(a.fecha)); 
@@ -763,7 +821,7 @@
             }, error => { console.error("Error cargando gastos públicos:", error); });
         };
         
-        // Function to load PUBLIC stock data
+        // --- Function to load PUBLIC stock data ---
         function cargarStockPublico() {
             if (!currentUserId) return;
             const stockQuery = query(collection(db, publicDataPath('stock')));
@@ -776,7 +834,7 @@
             }, (error) => { console.error("Error al obtener stock público: ", error); });
         }
 
-        // Function to populate the product dropdown
+        // --- Function to populate the product dropdown ---
         function actualizarDropdownProductos() {
             if (!ventaProductoSeleccionadoSelect) return;
             const valorSeleccionadoPreviamente = ventaProductoSeleccionadoSelect.value; 
@@ -785,7 +843,7 @@
                 const option = document.createElement('option');
                 option.value = item.id; 
                 option.textContent = `${item.nombre} (Disp: ${item.cantidad})`; 
-                option.disabled = item.cantidad === 0 && !(editingVentaIdInput.value && originalVentaDataForEdit && originalVentaDataForEdit.stockItemId === item.id); // Allow selecting if it's the item being edited, even if 0
+                option.disabled = item.cantidad === 0 && !(editingVentaIdInput.value && originalVentaDataForEdit && originalVentaDataForEdit.stockItemId === item.id);
                 ventaProductoSeleccionadoSelect.appendChild(option);
             });
             if (valorSeleccionadoPreviamente && ventaProductoSeleccionadoSelect.querySelector(`option[value="${valorSeleccionadoPreviamente}"]`)) {
@@ -793,7 +851,7 @@
             }
         }
 
-        // UI Display functions
+        // --- UI Display functions ---
         let mostrarVentas = (ventas) => { 
             const div = document.getElementById('listaVentas'); 
             if (!div) return; 
@@ -862,7 +920,7 @@
             }); 
         };
         
-        // Event delegation for delete and edit buttons
+        // --- Event delegation for delete and edit buttons ---
         document.addEventListener('click', async function(event) { 
             const target = event.target;
             if (target && target.classList.contains('delete-button')) { 
@@ -883,7 +941,7 @@
             const venta = currentVentas.find(v => v.id === ventaId);
             if (!venta) { console.error("Venta no encontrada para editar"); return; }
             
-            originalVentaDataForEdit = {...venta}; // Store original data for stock adjustment
+            originalVentaDataForEdit = {...venta}; 
 
             if(editingVentaIdInput) editingVentaIdInput.value = ventaId;
             if(formVentaTitle) formVentaTitle.textContent = 'Editar Venta';
@@ -893,9 +951,8 @@
             if(formVenta.ventaFecha) formVenta.ventaFecha.value = venta.fecha;
             if(ventaProductoSeleccionadoSelect) {
                 ventaProductoSeleccionadoSelect.value = venta.stockItemId;
-                // IMPORTANT: For sale edit, we disallow changing the product to simplify stock logic.
-                // If you want to allow changing product, the stock adjustment logic in formVenta submit needs to be more complex.
-                // ventaProductoSeleccionadoSelect.disabled = true; 
+                 // Allow changing the product. The stock adjustment logic in formVenta submit handles this.
+                ventaProductoSeleccionadoSelect.disabled = false; 
             }
             if(formVenta.ventaCantidad) formVenta.ventaCantidad.value = venta.cantidad;
             if(formVenta.ventaPrecioUnitario) formVenta.ventaPrecioUnitario.value = venta.precioVentaUnitario;
@@ -919,32 +976,39 @@
             formStock.scrollIntoView({ behavior: 'smooth' });
         }
         
-        // Function to handle document deletion from Firestore
+        // --- Function to handle document deletion from Firestore ---
         let handleDeleteDocument = (tipo, docId) => { 
             if (!currentUserId) { 
                 showConfirmModal("Error", "Debes iniciar sesión para eliminar.", () => {}); 
                 return; 
             } 
             const itemName = tipo === 'ventas' ? 'venta' : tipo === 'gastos' ? 'gasto' : 'artículo de stock'; 
+            let confirmMessage = `¿Está seguro que desea eliminar este ${itemName}? Esta acción no se puede deshacer.`;
+            if (tipo === 'ventas') {
+                confirmMessage += " Al eliminar una venta, el stock del artículo vendido se REAJUSTARÁ (aumentará).";
+            } else if (tipo === 'stock') {
+                confirmMessage += " Si este artículo tiene ventas asociadas, esas ventas NO se eliminarán, pero podrían mostrar 'Artículo N/A'.";
+            }
+
             showConfirmModal( 
                 `Confirmar Eliminación`, 
-                `¿Está seguro que desea eliminar este ${itemName}? Esta acción no se puede deshacer. Si elimina una venta, el stock NO se reajustará automáticamente.`, 
+                confirmMessage, 
                 async () => { 
                     try { 
                         if (tipo === 'ventas') {
-                            // Optionally, before deleting a sale, you might want to re-add its quantity to stock.
-                            // const ventaDoc = await getDoc(doc(db, publicDataPath('ventas'), docId));
-                            // if (ventaDoc.exists()) {
-                            // const ventaData = ventaDoc.data();
-                            // await updateDoc(doc(db, publicDataPath('stock'), ventaData.stockItemId), { cantidad: increment(ventaData.cantidad) });
-                            // }
-                            // For now, deleting a sale does not auto-adjust stock to keep it simpler. User needs to be aware.
+                            const ventaDoc = await getDoc(doc(db, publicDataPath('ventas'), docId));
+                            if (ventaDoc.exists()) {
+                                const ventaData = ventaDoc.data();
+                                if (ventaData.stockItemId && ventaData.cantidad > 0) {
+                                    await updateDoc(doc(db, publicDataPath('stock'), ventaData.stockItemId), { 
+                                        cantidad: increment(ventaData.cantidad) 
+                                    });
+                                }
+                            }
                         }
                         await deleteDoc(doc(db, publicDataPath(tipo), docId)); 
-                        // If the deleted item was being edited, reset the form
                         if (tipo === 'ventas' && editingVentaIdInput.value === docId) resetVentaForm();
                         if (tipo === 'stock' && editingStockIdInput.value === docId) resetStockForm();
-
                     } catch (error) { 
                         console.error(`Error al eliminar ${itemName} público:`, error); 
                         showConfirmModal("Error", `Ocurrió un error al eliminar el ${itemName}.`, () => {}); 
@@ -953,7 +1017,7 @@
             ); 
         };
         
-        // Function to update the financial summary display
+        // --- Function to update the financial summary display ---
         let actualizarResumen = () => { 
             const totalIngresos = currentVentas.reduce((sum, v) => sum + parseFloat(v.total || 0), 0); 
             const totalEgresos = currentGastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0); 
