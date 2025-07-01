@@ -1,967 +1,1043 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control Financiero y de Stock</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Corrected Phosphor Icons CDN link -->
-    <link href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/bold/style.css" rel="stylesheet">
-    <style>
-        :root {
-            --bg-primary: #0D0B14;
-            --bg-secondary: #1A1629;
-            --bg-tertiary: #1F1C30;
-            --border-primary: #2A2540;
-            --border-secondary: #3A305A;
-            --text-primary: #EAEAEA;
-            --text-secondary: #A09CB8;
-            --accent-primary: #A755F7;
-            --accent-secondary: #C879FF;
-            --accent-hover: #8B5CF6;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        .main-container {
-            display: flex;
-            min-height: 100vh;
-        }
-        .sidebar {
-            width: 250px;
-            background-color: var(--bg-secondary);
-            border-right: 1px solid var(--border-primary);
-            padding: 2rem 1rem;
-            display: flex;
-            flex-direction: column;
-            transition: width 0.3s ease;
-        }
-        .sidebar-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding-bottom: 1.5rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border-secondary);
-        }
-        .sidebar-header i {
-            font-size: 2rem;
-            color: var(--accent-secondary);
-        }
-        .sidebar-header h1 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        .nav-button {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.875rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            background-color: transparent;
-            color: var(--text-secondary);
-            border: none;
-            width: 100%;
-            text-align: left;
-            font-size: 1rem;
-            font-weight: 500;
-            transition: color 0.3s ease, background-color 0.3s ease;
-        }
-        .nav-button:hover {
-            background-color: var(--border-primary);
-            color: var(--text-primary);
-        }
-        .nav-button.active {
-            background-color: var(--accent-primary);
-            color: white;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
-        }
-        .nav-button i { font-size: 1.25rem; }
-        .content-area {
-            flex-grow: 1;
-            padding: 2rem;
-            overflow-y: auto;
-        }
-        .page-content { display: none; }
-        .page-content.active { display: block; }
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        .page-header h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: white;
-        }
-        .user-info {
-            background-color: var(--bg-secondary);
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            border: 1px solid var(--border-primary);
-            font-weight: 500;
-        }
-        .user-info span { color: var(--accent-secondary); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Financiero y de Stock</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #0D0B14; 
+            color: #EAEAEA; 
+            -webkit-font-smoothing: antialiased; 
+            -moz-osx-font-smoothing: grayscale; 
+        }
+        .container { 
+            max-width: 1200px; 
+        }
+        
+        #authContainer {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        #userInfo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: #1A1629;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #2A2540;
+        }
+        #userInfo img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+        #userInfo span {
+            font-size: 0.875rem;
+            color: #A09CB8;
+        }
 
-        .card {
-            background-color: var(--bg-secondary);
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            border: 1px solid var(--border-primary);
-        }
-        .card h3 {
-            color: var(--accent-secondary);
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1.25rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--border-secondary);
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        input[type="text"], input[type="number"], input[type="date"], select, textarea {
-            width: 100%;
-            padding: 12px 15px;
-            margin-bottom: 1.25rem;
-            border: 1px solid var(--border-secondary);
-            border-radius: 8px;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            box-sizing: border-box;
-            font-size: 0.95rem;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px rgba(167, 85, 247, 0.3);
-        }
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(1) brightness(0.8);
-        }
-        button {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-            line-height: 1.5;
-        }
-        .btn-primary {
-            background-color: var(--accent-hover);
-            color: white;
-            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.25);
-        }
-        .btn-primary:hover {
-            background-color: #7C3AED;
-            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
-            transform: translateY(-2px);
-        }
-        .btn-secondary {
-            background-color: var(--border-secondary);
-            color: var(--text-secondary);
-            border: 1px solid #4A406A;
-        }
-        .btn-secondary:hover {
-            background-color: #4A406A;
-            color: var(--accent-secondary);
-        }
-        .delete-button {
-            background-image: linear-gradient(to right, #E53E3E, #C53030);
-            color: white;
-            font-weight: 500;
-            box-shadow: 0 2px 8px rgba(200, 50, 50, 0.3);
-        }
-        .delete-button:hover {
-            background-image: linear-gradient(to right, #F56565, #E53E3E);
-            box-shadow: 0 4px 12px rgba(200, 50, 50, 0.4);
-            transform: translateY(-1px);
-        }
-        .list-item {
-            background-color: var(--bg-tertiary);
-            padding: 1.125rem;
-            border-radius: 10px;
-            margin-bottom: 0.75rem;
-            border-left: 4px solid var(--accent-primary);
-            transition: background-color 0.3s ease;
-        }
-        .list-item:hover { background-color: #25213A; }
-        .list-item p {
-            margin: 0.375rem 0;
-            font-size: 0.9rem;
-        }
-        .list-item strong {
-            color: #B0A8D8;
-            font-weight: 500;
-        }
-        .list-item .actions button {
-            font-size: 0.8rem;
-            padding: 6px 10px;
-        }
-        .summary-item {
-            background-color: var(--border-primary);
-            padding: 1.25rem;
-            border-radius: 10px;
-            text-align: center;
-            border: 1px solid var(--border-secondary);
-        }
-        .summary-item h4 {
-            color: var(--accent-secondary);
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-        .summary-item p {
-            color: #FFFFFF;
-            font-size: 1.8rem;
-            font-weight: 700;
-        }
-        #loginScreen {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(13, 11, 20, 0.9);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-        }
-        .login-box {
-            background-color: var(--bg-secondary);
-            padding: 2.5rem;
-            border-radius: 16px;
-            border: 1px solid var(--border-primary);
-            text-align: center;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-        }
-        .login-box h2 {
-            color: white;
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-        .login-box p {
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-        }
-        #loginNameInput {
-            text-align: center;
-            font-size: 1.1rem;
-            margin-bottom: 1.5rem;
-        }
-        #loginError {
-            color: #f87171;
-            margin-top: -1rem;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-            height: 1.25rem; /* Reserve space to prevent layout shift */
-        }
+        .header { 
+            text-align: center; 
+            padding-top: 4rem; /* Added padding to avoid overlap with authContainer */
+        }
+        .header h1 { 
+            color: #FFFFFF; 
+            font-size: 2.5rem; 
+            font-weight: 700; 
+            letter-spacing: -0.5px; 
+        }
+        
+        .tabs-nav { 
+            display: flex; 
+            justify-content: center; 
+            margin-bottom: 2.5rem; 
+            border-bottom: 1px solid #3A305A; 
+        }
+        .tab-button { 
+            padding: 12px 25px; 
+            cursor: pointer; 
+            background-color: transparent; 
+            color: #A09CB8; 
+            border: none; 
+            border-bottom: 3px solid transparent; 
+            font-size: 1.1rem; 
+            font-weight: 500; 
+            transition: color 0.3s ease, border-bottom-color 0.3s ease; 
+            margin: 0 10px; 
+        }
+        .tab-button:hover { color: #C879FF; }
+        .tab-button.active { 
+            color: #C879FF; 
+            border-bottom-color: #A755F7; 
+            font-weight: 600; 
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .main-container {
-                flex-direction: column;
-            }
-            .sidebar {
-                width: 100%;
-                height: auto;
-                border-right: none;
-                border-bottom: 1px solid var(--border-primary);
-                flex-direction: row;
-                justify-content: space-around;
-                padding: 0.5rem;
-            }
-            .sidebar-header { display: none; }
-            .nav-button {
-                flex-direction: column;
-                gap: 0.25rem;
-                padding: 0.75rem 0.5rem;
-                font-size: 0.75rem;
-            }
-            .nav-button i { font-size: 1.5rem; }
-            .content-area { padding: 1rem; }
-            .page-header h2 { font-size: 1.5rem; }
-        }
-    </style>
+        .card { 
+            background-color: #1A1629; 
+            padding: 1.5rem; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3), 0 0 15px rgba(120, 50, 220, 0.1); 
+            border: 1px solid #2A2540; 
+        }
+        .card h2 { 
+            color: #C879FF; 
+            font-size: 1.75rem; 
+            font-weight: 600; 
+            margin-bottom: 1.25rem; 
+            padding-bottom: 0.75rem; 
+            border-bottom: 1px solid #3A305A; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 0.5rem; 
+            font-weight: 500; 
+            color: #A09CB8; 
+            font-size: 0.9rem; 
+        }
+        input[type="text"], input[type="number"], input[type="date"], select, textarea { 
+            width: 100%; 
+            padding: 12px 15px; 
+            margin-bottom: 1.25rem; 
+            border: 1px solid #3A305A; 
+            border-radius: 8px; 
+            background-color: #0D0B14; 
+            color: #EAEAEA; 
+            box-sizing: border-box; 
+            font-size: 0.95rem; 
+            transition: border-color 0.3s ease, box-shadow 0.3s ease; 
+        }
+        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, select:focus, textarea:focus { 
+            outline: none; 
+            border-color: #A755F7; 
+            box-shadow: 0 0 0 3px rgba(167, 85, 247, 0.3); 
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator { 
+            filter: invert(1) brightness(0.8); 
+        }
+
+        button { 
+            padding: 12px 25px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1rem; 
+            font-weight: 600; 
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease; 
+            line-height: 1.5; 
+        }
+        .btn-primary { 
+            background-color: #8B5CF6; 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.25); 
+        }
+        .btn-primary:hover { 
+            background-color: #7C3AED; 
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35); 
+            transform: translateY(-2px); 
+        }
+         .btn-google {
+            background-color: #4285F4; color: white;
+            display: flex; align-items: center; justify-content: center;
+            gap: 0.5rem; /* Reduced gap */
+            padding: 0.5rem 1rem; /* Adjusted padding */
+            font-size: 0.9rem;
+        }
+        .btn-google:hover { background-color: #357AE8; }
+        .btn-google svg { width: 18px; height: 18px; }
+
+        .btn-secondary {
+            background-color: #3A305A;
+            color: #A09CB8;
+            border: 1px solid #4A406A;
+        }
+        .btn-secondary:hover {
+            background-color: #4A406A;
+            color: #C879FF;
+        }
+        .btn-cancel {
+            background-color: #555;
+            color: white;
+        }
+        .btn-cancel:hover {
+            background-color: #666;
+        }
+
+
+        .summary-item { 
+            background-color: #2A2540; 
+            padding: 1.25rem; 
+            border-radius: 10px; 
+            text-align: center; 
+            border: 1px solid #3A305A; 
+        }
+        .summary-item h3 { 
+            color: #C879FF; 
+            font-size: 1.1rem; 
+            margin-bottom: 0.5rem; 
+            font-weight: 500; 
+        }
+        .summary-item p { 
+            color: #FFFFFF; 
+            font-size: 1.8rem; 
+            font-weight: 700; 
+        }
+        
+        .list-item { 
+            background-color: #1F1C30; 
+            padding: 1.125rem; 
+            border-radius: 10px; 
+            margin-bottom: 0.75rem; 
+            border-left: 4px solid #A755F7; 
+            transition: background-color 0.3s ease; 
+        }
+        .list-item:hover { background-color: #25213A; }
+        .list-item p { 
+            margin: 0.375rem 0; 
+            font-size: 0.9rem; 
+        }
+        .list-item strong { 
+            color: #B0A8D8; 
+            font-weight: 500; 
+        }
+        .list-item .actions button {
+            font-size: 0.8rem;
+            padding: 6px 10px;
+        }
+        
+        .footer { 
+            text-align: center; 
+            margin-top: 3.125rem; 
+            padding: 1.25rem; 
+            background-color: transparent; 
+            color: #6A628F; 
+            font-size: 0.85rem; 
+        }
+        .footer p:first-child { margin-bottom: 5px; }
+        
+        .text-gray-700 { 
+            background-color: #100E1C !important; 
+            color: #908BAA !important; 
+        }
+        .text-gray-400 { 
+            color: #7A7299; 
+            padding: 0.625rem 0; 
+        }
+        
+        .delete-button { 
+            background-image: linear-gradient(to right, #E53E3E, #C53030); 
+            color: white; 
+            /* padding: 6px 12px; -> Handled by .actions button */
+            /* font-size: 0.8rem; -> Handled by .actions button */
+            font-weight: 500; 
+            box-shadow: 0 2px 8px rgba(200, 50, 50, 0.3); 
+        }
+        .delete-button:hover { 
+            background-image: linear-gradient(to right, #F56565, #E53E3E); 
+            box-shadow: 0 4px 12px rgba(200, 50, 50, 0.4); 
+            transform: translateY(-1px); 
+        }
+
+        ::-webkit-scrollbar { width: 8px; } 
+        ::-webkit-scrollbar-track { background: #0D0B14; } 
+        ::-webkit-scrollbar-thumb { background: #3A305A; border-radius: 4px; } 
+        ::-webkit-scrollbar-thumb:hover { background: #A755F7; }
+    </style>
 </head>
 <body>
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <div id="authContainer">
+            <!-- Auth buttons will be injected here -->
+        </div>
 
-    <div id="loginScreen">
-        <div class="login-box">
-            <h2>Bienvenido/a</h2>
-            <p>Por favor, ingrese su nombre para continuar.</p>
-            <form id="loginForm">
-                <label for="loginNameInput">Nombre (SOL o BRANDON)</label>
-                <input type="text" id="loginNameInput" placeholder="Escriba su nombre aquí..." required>
-                <div id="loginError"></div>
-                <button type="submit" class="btn-primary w-full">Ingresar</button>
-            </form>
-        </div>
-    </div>
+        <div id="appContent" class="hidden"> 
+            <header class="header py-4 mb-10"> <h1>Control Financiero y de Stock</h1>
+            </header>
 
-    <div id="appContent" class="main-container hidden">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <i class="ph-bold ph-storefront"></i>
-                <h1>Mi Negocio</h1>
-            </div>
-            <nav class="flex-grow flex md:flex-col gap-2">
-                <button class="nav-button active" data-page="pdv">
-                    <i class="ph-bold ph-shopping-cart-simple"></i>
-                    <span>Punto de Venta</span>
-                </button>
-                <button class="nav-button" data-page="finanzas">
-                    <i class="ph-bold ph-chart-bar"></i>
-                    <span>Finanzas</span>
-                </button>
-                <button class="nav-button" data-page="inventario">
-                    <i class="ph-bold ph-package"></i>
-                    <span>Inventario</span>
-                </button>
-            </nav>
-        </aside>
+            <nav class="tabs-nav"> <button class="tab-button active" data-tab="finanzas">Control Financiero</button>
+                <button class="tab-button" data-tab="stock">Stock</button>
+            </nav>
 
-        <main class="content-area">
-            <!-- Punto de Venta Page -->
-            <div id="page-pdv" class="page-content active">
-                <div class="page-header">
-                    <h2>Punto de Venta</h2>
-                    <div id="userInfoPdv" class="user-info"></div>
-                </div>
-                <div class="card">
-                    <h3 id="formVentaTitle">Registrar Nueva Venta</h3>
-                    <form id="formVenta">
-                        <input type="hidden" id="editingVentaId">
-                        <div><label for="ventaFecha">Fecha:</label><input type="date" id="ventaFecha" required></div>
-                        <div>
-                            <label for="ventaProductoSeleccionado">Artículo de Stock Vendido:</label>
-                            <select id="ventaProductoSeleccionado" required>
-                                <option value="">Seleccione un artículo...</option>
-                            </select>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label for="ventaCantidad">Cantidad Vendida:</label><input type="number" id="ventaCantidad" min="1" value="1" required></div>
-                            <div><label for="ventaPrecioUnitario">Precio Venta Unitario ($):</label><input type="number" id="ventaPrecioUnitario" min="0" step="0.01" placeholder="Ej: 25.00" required></div>
-                        </div>
-                        <div><label for="ventaTotal">Total Venta ($):</label><input type="text" id="ventaTotal" readonly class="bg-gray-800 text-gray-300"></div>
-                        <div><label for="ventaNotas">Notas Adicionales:</label><textarea id="ventaNotas" rows="2" placeholder="Detalles extra de la venta..."></textarea></div>
-                        <div class="flex gap-4 mt-6">
-                            <button type="submit" id="submitVentaButton" class="btn-primary w-full">Agregar Venta</button>
-                            <button type="button" id="cancelEditVentaButton" class="btn-secondary w-full hidden">Cancelar Edición</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+            <div id="seccionFinanzas" class="tab-content active pt-8"> 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8"> 
+                    <div class="card">
+                        <h2 id="formVentaTitle">Registrar Nueva Venta</h2>
+                        <form id="formVenta">
+                            <input type="hidden" id="editingVentaId" name="editingVentaId">
+                            <div><label for="ventaFecha">Fecha:</label><input type="date" id="ventaFecha" name="ventaFecha" required></div>
+                            <div>
+                                <label for="ventaProductoSeleccionado">Artículo de Stock Vendido:</label>
+                                <select id="ventaProductoSeleccionado" name="ventaProductoSeleccionado" required>
+                                    <option value="">Seleccione un artículo...</option>
+                                    <!-- Options will be populated by JS -->
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label for="ventaCantidad">Cantidad Vendida:</label><input type="number" id="ventaCantidad" name="ventaCantidad" min="1" value="1" required></div>
+                                <div><label for="ventaPrecioUnitario">Precio Venta Unitario ($):</label><input type="number" id="ventaPrecioUnitario" name="ventaPrecioUnitario" min="0" step="0.01" placeholder="Ej: 25.00" required></div>
+                            </div>
+                            <div><label for="ventaTotal">Total Venta ($):</label><input type="text" id="ventaTotal" name="ventaTotal" readonly class="text-gray-700"></div>
+                            <div><label for="ventaNotas">Notas Adicionales:</label><textarea id="ventaNotas" name="ventaNotas" rows="2" placeholder="Detalles extra de la venta..."></textarea></div>
+                            <div class="flex gap-4 mt-6">
+                                <button type="submit" id="submitVentaButton" class="btn-primary w-full">Agregar Venta</button> 
+                                <button type="button" id="cancelEditVentaButton" class="btn-cancel w-full hidden">Cancelar Edición</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h2>Registrar Nuevo Gasto</h2>
+                        <form id="formGasto">
+                            <div><label for="gastoFecha">Fecha:</label><input type="date" id="gastoFecha" name="gastoFecha" required></div>
+                            <div><label for="gastoDescripcion">Descripción/Servicio:</label><input type="text" id="gastoDescripcion" name="gastoDescripcion" placeholder="Ej: Suscripción a software" required></div>
+                            <div><label for="gastoCategoria">Categoría:</label>
+                                <select id="gastoCategoria" name="gastoCategoria" required>
+                                    <option value="">Seleccione una categoría...</option>
+                                    <option value="proveedores">Proveedores</option><option value="software_suscripciones">Software y Suscripciones</option><option value="alquiler">Alquiler / Oficina</option><option value="servicios_publicos">Servicios Públicos</option><option value="marketing">Marketing y Publicidad</option><option value="salarios_colaboradores">Salarios / Colaboradores</option><option value="transporte_viajes">Transporte / Viajes</option><option value="impuestos_tasas">Impuestos y Tasas</option><option value="formacion_educacion">Formación y Educación</option><option value="equipamiento_hardware">Equipamiento / Hardware</option><option value="comisiones_bancarias">Comisiones Bancarias</option><option value="otros">Otros</option>
+                                </select>
+                            </div>
+                            <div><label for="gastoMonto">Monto Total ($):</label><input type="number" id="gastoMonto" name="gastoMonto" min="0" step="0.01" placeholder="Ej: 49.99" required></div>
+                            <div><label for="gastoNotas">Notas Adicionales:</label><textarea id="gastoNotas" name="gastoNotas" rows="2" placeholder="Detalles extra del gasto..."></textarea></div>
+                            <button type="submit" class="btn-primary w-full mt-6">Agregar Gasto</button> </form>
+                    </div>
+                </div>
+                <div class="card mb-8">
+                    <h2>Resumen Financiero</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8"> <div class="summary-item"><h3>Ingresos Totales</h3><p id="totalIngresos">$0.00</p></div>
+                        <div class="summary-item"><h3>Egresos Totales</h3><p id="totalEgresos">$0.00</p></div>
+                        <div class="summary-item"><h3>Balance General</h3><p id="balanceGeneral">$0.00</p></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8"> <div class="card"><h2>Listado de Ventas</h2><div id="listaVentas"><p class="text-gray-400">Aún no hay ventas registradas.</p></div></div>
+                    <div class="card"><h2>Listado de Gastos</h2><div id="listaGastos"><p class="text-gray-400">Aún no hay gastos registrados.</p></div></div>
+                </div>
+            </div>
 
-            <!-- Finanzas Page -->
-            <div id="page-finanzas" class="page-content">
-                <div class="page-header">
-                    <h2>Control Financiero</h2>
-                    <div id="userInfoFinanzas" class="user-info"></div>
-                </div>
-                <div class="card mb-8">
-                    <h3>Resumen Financiero General</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="summary-item"><h4>Ingresos Totales</h4><p id="totalIngresos">$0.00</p></div>
-                        <div class="summary-item"><h4>Egresos Totales</h4><p id="totalEgresos">$0.00</p></div>
-                        <div class="summary-item"><h4>Balance General</h4><p id="balanceGeneral">$0.00</p></div>
-                    </div>
-                </div>
-                <div class="card mb-8">
-                    <h3>Resumen Mensual</h3>
-                    <div class="flex items-end gap-4">
-                        <div class="flex-grow"><label for="monthSelector">Seleccionar Mes:</label><input type="month" id="monthSelector"></div>
-                        <button id="generateSummaryBtn" class="btn-primary">Generar Resumen</button>
-                    </div>
-                    <div id="monthlySummaryResult" class="mt-6 hidden"></div>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="card">
-                        <h3>Listado de Ventas</h3>
-                        <div id="listaVentas" class="max-h-96 overflow-y-auto pr-2"><p class="text-gray-400">Aún no hay ventas registradas.</p></div>
-                    </div>
-                    <div class="card">
-                        <h3>Registrar y Ver Gastos</h3>
-                        <form id="formGasto" class="mb-6">
-                             <div><label for="gastoFecha">Fecha:</label><input type="date" id="gastoFecha" required></div>
-                             <div><label for="gastoDescripcion">Descripción/Servicio:</label><input type="text" id="gastoDescripcion" placeholder="Ej: Suscripción a software" required></div>
-                             <div><label for="gastoMonto">Monto Total ($):</label><input type="number" id="gastoMonto" min="0" step="0.01" placeholder="Ej: 49.99" required></div>
-                             <button type="submit" class="btn-primary w-full mt-2">Agregar Gasto</button>
-                        </form>
-                        <div id="listaGastos" class="max-h-96 overflow-y-auto pr-2"><p class="text-gray-400">Aún no hay gastos registrados.</p></div>
-                    </div>
-                </div>
-            </div>
+            <div id="seccionStock" class="tab-content pt-8"> 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8"> 
+                    <div class="card">
+                        <h2 id="formStockTitle">Registrar Artículo en Stock</h2>
+                        <form id="formStock">
+                            <input type="hidden" id="editingStockId" name="editingStockId">
+                            <div>
+                                <label for="stockNombre">Nombre del Artículo:</label>
+                                <input type="text" id="stockNombre" name="stockNombre" placeholder="Ej: Camiseta Negra Talla M" required>
+                            </div>
+                            <div>
+                                <label for="stockCantidad">Cantidad Actual:</label>
+                                <input type="number" id="stockCantidad" name="stockCantidad" min="0" placeholder="Ej: 50" required>
+                            </div>
+                             <div>
+                                <label for="stockNotas">Notas (Opcional):</label>
+                                <textarea id="stockNotas" name="stockNotas" rows="3" placeholder="Detalles como SKU, ubicación, proveedor..."></textarea>
+                            </div>
+                            <div class="flex gap-4 mt-6">
+                                <button type="submit" id="submitStockButton" class="btn-primary w-full">Agregar al Stock</button> 
+                                <button type="button" id="cancelEditStockButton" class="btn-cancel w-full hidden">Cancelar Edición</button>
+                            </div>
+                        </form>
+                    </div>
 
-            <!-- Inventario Page -->
-            <div id="page-inventario" class="page-content">
-                <div class="page-header">
-                    <h2>Gestión de Inventario</h2>
-                    <div id="userInfoInventario" class="user-info"></div>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="card">
-                        <h3 id="formStockTitle">Registrar Artículo</h3>
-                        <form id="formStock">
-                            <input type="hidden" id="editingStockId">
-                            <div><label for="stockNombre">Nombre del Artículo:</label><input type="text" id="stockNombre" placeholder="Ej: Camiseta Negra Talla M" required></div>
-                            <div><label for="stockCantidad">Cantidad Actual:</label><input type="number" id="stockCantidad" min="0" placeholder="Ej: 50" required></div>
-                            <div><label for="stockNotas">Notas (Opcional):</label><textarea id="stockNotas" rows="3" placeholder="Detalles como SKU, ubicación..."></textarea></div>
-                            <div class="flex gap-4 mt-6">
-                                <button type="submit" id="submitStockButton" class="btn-primary w-full">Agregar al Stock</button>
-                                <button type="button" id="cancelEditStockButton" class="btn-secondary w-full hidden">Cancelar Edición</button>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="card">
-                        <h3>Listado de Stock</h3>
-                        <div id="listaStock" class="max-h-[60vh] overflow-y-auto pr-2"><p class="text-gray-400">Aún no hay artículos en stock.</p></div>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
+                    <div class="card">
+                        <h2>Listado de Stock</h2>
+                        <div id="listaStock">
+                            <p class="text-gray-400">Aún no hay artículos en stock.</p>
+                            <!-- Stock items will be listed here by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div> 
 
-    <!-- Modal -->
-    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-secondary p-6 rounded-lg shadow-xl max-w-sm w-full border border-border-primary">
-            <h3 id="confirmModalTitle" class="text-lg font-semibold text-accent-secondary mb-4">Confirmar Acción</h3>
-            <p id="confirmModalMessage" class="text-text-secondary mb-6">¿Está seguro?</p>
-            <div class="flex justify-end space-x-3">
-                <button id="confirmModalCancel" class="btn-secondary">Cancelar</button>
-                <button id="confirmModalConfirm" class="delete-button">Confirmar</button>
-            </div>
-        </div>
-    </div>
+            <footer class="footer"> 
+                <p>ID de Usuario: <span id="userIdDisplay">N/A</span></p>
+                <p>&copy; <span id="currentYear"></span> Mi Negocio - Control Financiero y de Stock</p>
+            </footer>
+        </div> 
+    </div>
 
-    <script type="module">
-        // Firebase SDK imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-        import { getFirestore, doc, addDoc, collection, onSnapshot, query, deleteDoc, serverTimestamp, setLogLevel, updateDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-[#1A1629] p-6 rounded-lg shadow-xl max-w-sm w-full border border-[#3A305A]">
+            <h3 id="confirmModalTitle" class="text-lg font-semibold text-[#C879FF] mb-4">Confirmar Acción</h3>
+            <p id="confirmModalMessage" class="text-[#A09CB8] mb-6">¿Está seguro?</p>
+            <div class="flex justify-end space-x-3">
+                <button id="confirmModalCancel" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-md text-sm font-medium">Cancelar</button>
+                <button id="confirmModalConfirm" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md text-sm font-medium">Confirmar</button>
+            </div>
+        </div>
+    </div>
 
-        // --- Firebase Configuration ---
-        // Added a fallback configuration to prevent initialization errors.
-        const userProvidedConfig = {
-            apiKey: "AIzaSy...", // Replace with your actual config
-            authDomain: "your-project-id.firebaseapp.com",
-            projectId: "your-project-id",
-            storageBucket: "your-project-id.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:abcdef123456"
-        };
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userProvidedConfig;
-        const firestoreAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    <script type="module">
+        // Firebase SDK imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js"; // Added signInWithCustomToken, signInAnonymously
+        import { getFirestore, doc, addDoc, collection, onSnapshot, query, deleteDoc, serverTimestamp, setLogLevel, updateDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
-        // --- Initialize Firebase ---
-        let db;
-        try {
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            setLogLevel('info');
-        } catch (error) {
-            console.error("Firebase initialization failed:", error);
-            // Hide login form and show an error message on the page
-            document.getElementById('loginScreen').innerHTML = `<div class="login-box"><h2>Error de Configuración</h2><p>La aplicación no pudo iniciarse. Por favor, verifique la configuración de Firebase.</p></div>`;
-        }
-        
+        // --- Firebase Configuration ---
+        // Use __firebase_config if available (provided by Canvas environment), otherwise fall back to user-provided.
+        const userProvidedConfig = { // This is a fallback if __firebase_config is not defined
+            apiKey: "AIzaSyDn6u2nWYahTsXUpxfadWJNkpyAHiSTA_s",
+            authDomain: "comet-v10.firebaseapp.com",
+            projectId: "comet-v10",
+            storageBucket: "comet-v10.firebasestorage.app",
+            messagingSenderId: "861183141332",
+            appId: "1:861183141332:web:1b256ba1e4b785bc29e241",
+            measurementId: "G-1TX5PQB72H"
+        };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userProvidedConfig;
+        const firestoreAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; 
+        
+        // --- Initialize Firebase ---
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider(); // For Google Sign-In
+        setLogLevel('info'); // Firebase logging level, can be 'debug' for more details
 
-        // --- Global Variables ---
-        let currentUserName = null;
-        let originalVentaDataForEdit = null;
-        let ventasUnsubscribe = null, gastosUnsubscribe = null, stockUnsubscribe = null;
-        let currentVentas = [], currentGastos = [], currentStock = [];
+        // --- Global Variables ---
+        let currentUserId = null; 
+        let originalVentaDataForEdit = null; // To store original sale data when editing for stock adjustment
+        let ventasUnsubscribe = null, gastosUnsubscribe = null, stockUnsubscribe = null; 
+        let currentVentas = [], currentGastos = [], currentStock = []; 
 
-        // --- DOM Elements ---
-        const loginScreen = document.getElementById('loginScreen');
-        const loginForm = document.getElementById('loginForm');
-        const loginNameInput = document.getElementById('loginNameInput');
-        const loginError = document.getElementById('loginError');
-        const appContent = document.getElementById('appContent');
-        
-        const navButtons = document.querySelectorAll('.nav-button');
-        const pageContents = document.querySelectorAll('.page-content');
-        
-        const formVenta = document.getElementById('formVenta');
-        const formGasto = document.getElementById('formGasto');
-        const formStock = document.getElementById('formStock');
-        
-        const confirmModal = document.getElementById('confirmModal');
-        const confirmModalTitle = document.getElementById('confirmModalTitle');
-        const confirmModalMessage = document.getElementById('confirmModalMessage');
-        const confirmModalCancel = document.getElementById('confirmModalCancel');
-        const confirmModalConfirm = document.getElementById('confirmModalConfirm');
-        let confirmCallback = null;
+        // --- DOM Elements ---
+        const authContainer = document.getElementById('authContainer');
+        const appContent = document.getElementById('appContent');
+        const userIdDisplayFooter = document.getElementById('userIdDisplay');
+        
+        const formVentaTitle = document.getElementById('formVentaTitle');
+        const submitVentaButton = document.getElementById('submitVentaButton');
+        const cancelEditVentaButton = document.getElementById('cancelEditVentaButton');
+        const editingVentaIdInput = document.getElementById('editingVentaId');
 
-        // --- Login Logic ---
-        if (loginForm) {
-            loginForm.addEventListener('submit', (e) => {
-                e.preventDefault(); // This is crucial to prevent page reload
-                if (!db) { // Check if Firebase initialized
-                    loginError.textContent = 'Error de configuración de la base de datos.';
-                    return;
-                }
-                const name = loginNameInput.value.trim().toUpperCase();
-                if (name === 'SOL' || name === 'BRANDON') {
-                    currentUserName = name.charAt(0) + name.slice(1).toLowerCase();
-                    loginScreen.classList.add('hidden');
-                    appContent.classList.remove('hidden');
-                    initializeAppLogic();
-                } else {
-                    loginError.textContent = 'Nombre no válido. Intente con SOL o BRANDON.';
-                    loginNameInput.focus();
-                }
-            });
-        }
+        const formStockTitle = document.getElementById('formStockTitle');
+        const submitStockButton = document.getElementById('submitStockButton');
+        const cancelEditStockButton = document.getElementById('cancelEditStockButton');
+        const editingStockIdInput = document.getElementById('editingStockId');
+
+        const tabButtons = document.querySelectorAll('.tab-button'); 
+        const tabContents = document.querySelectorAll('.tab-content'); 
+        const confirmModal = document.getElementById('confirmModal'), 
+              confirmModalTitle = document.getElementById('confirmModalTitle'), 
+              confirmModalMessage = document.getElementById('confirmModalMessage'), 
+              confirmModalCancel = document.getElementById('confirmModalCancel'), 
+              confirmModalConfirm = document.getElementById('confirmModalConfirm');
+        let confirmCallback = null;
+
+        // Form and Input Element Selectors
+        const formVenta = document.getElementById('formVenta'), 
+              formGasto = document.getElementById('formGasto'), 
+              formStock = document.getElementById('formStock'); 
+        const ventaCantidadInput = document.getElementById('ventaCantidad'), 
+              ventaPrecioUnitarioInput = document.getElementById('ventaPrecioUnitario'), 
+              ventaTotalInput = document.getElementById('ventaTotal');
+        const ventaProductoSeleccionadoSelect = document.getElementById('ventaProductoSeleccionado');
+
+        // --- Tab Navigation Logic ---
+        tabButtons.forEach(button => { 
+            button.addEventListener('click', () => { 
+                tabButtons.forEach(btn => btn.classList.remove('active')); 
+                button.classList.add('active'); 
+                const targetTab = button.dataset.tab; 
+                tabContents.forEach(content => { 
+                    const sectionId = `seccion${targetTab.charAt(0).toUpperCase() + targetTab.slice(1)}`; 
+                    if (content.id === sectionId) { content.classList.add('active'); } 
+                    else { content.classList.remove('active'); } 
+                }); 
+            }); 
+        });
+        
+        // --- Confirmation Modal Logic ---
+        const showConfirmModal = (title, message, onConfirm) => { 
+            if(confirmModalTitle) confirmModalTitle.textContent = title; 
+            if(confirmModalMessage) confirmModalMessage.textContent = message; 
+            confirmCallback = onConfirm; 
+            if(confirmModal) confirmModal.classList.remove('hidden'); 
+        };
+        if(confirmModalCancel) confirmModalCancel.addEventListener('click', () => { 
+            if(confirmModal) confirmModal.classList.add('hidden'); 
+            confirmCallback = null; 
+        });
+        if(confirmModalConfirm) confirmModalConfirm.addEventListener('click', () => { 
+            if (confirmCallback) confirmCallback(); 
+            if(confirmModal) confirmModal.classList.add('hidden'); 
+            confirmCallback = null; 
+        });
+
+        // --- Update Auth UI ---
+        function updateAuthUI(user) {
+            if (!authContainer) return;
+            authContainer.innerHTML = ''; // Clear previous content
+
+            if (user) {
+                const userInfoDiv = document.createElement('div');
+                userInfoDiv.id = 'userInfo';
+                
+                const userImage = document.createElement('img');
+                userImage.src = user.photoURL || `https://placehold.co/24x24/7C3AED/FFFFFF?text=${user.email ? user.email[0].toUpperCase() : 'U'}`;
+                userImage.alt = 'User Avatar';
+                userImage.onerror = () => { userImage.src = `https://placehold.co/24x24/7C3AED/FFFFFF?text=${user.email ? user.email[0].toUpperCase() : 'U'}`; };
+
+                const userEmailSpan = document.createElement('span');
+                userEmailSpan.textContent = user.email || "Usuario Anónimo"; // Handle anonymous users
+
+                userInfoDiv.appendChild(userImage);
+                userInfoDiv.appendChild(userEmailSpan);
+
+                const signOutBtn = document.createElement('button');
+                signOutBtn.id = 'signOutButton';
+                signOutBtn.className = 'btn-primary';
+                signOutBtn.textContent = 'Cerrar Sesión';
+                signOutBtn.style.padding = '0.5rem 1rem'; 
+                signOutBtn.style.fontSize = '0.9rem';   
+                signOutBtn.addEventListener('click', async () => {
+                    try {
+                        await signOut(auth);
+                    } catch (error) {
+                        console.error("Error al cerrar sesión:", error);
+                        showConfirmModal("Error", "No se pudo cerrar la sesión.", () => {});
+                    }
+                });
+                authContainer.appendChild(userInfoDiv);
+                authContainer.appendChild(signOutBtn);
+
+            } else {
+                const signInBtn = document.createElement('button');
+                signInBtn.id = 'googleSignInButton';
+                signInBtn.className = 'btn-google py-2 px-4 rounded-lg font-semibold shadow-md';
+                signInBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="currentColor" style="width: 18px; height: 18px;">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        <path d="M1 1h22v22H1z" fill="none"/>
+                    </svg>
+                    <span>Iniciar Sesión con Google</span>`;
+                signInBtn.addEventListener('click', async () => {
+                    try {
+                        await signInWithPopup(auth, provider);
+                    } catch (error) {
+                        console.error("Error durante el inicio de sesión con Google:", error);
+                        showConfirmModal("Error de Inicio de Sesión", `No se pudo iniciar sesión con Google: ${error.message}`, () => {});
+                    }
+                });
+                authContainer.appendChild(signInBtn);
+            }
+        }
+
+        // --- Firebase Authentication State Change Listener ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                if (appContent) appContent.classList.remove('hidden');
+                if (userIdDisplayFooter) userIdDisplayFooter.textContent = currentUserId;
+                
+                console.log("Usuario autenticado:", currentUserId, user.email || "Anónimo");
+                updateAuthUI(user); // Update UI with user info
+                cargarDatosFinancierosPublicos();
+                cargarStockPublico();
+            } else {
+                 // Try to sign in with custom token if available, otherwise sign in anonymously
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                        // onAuthStateChanged will be triggered again if successful
+                        console.log("Intentando inicio de sesión con token personalizado...");
+                    } catch (error) {
+                        console.error("Error con token personalizado, intentando anónimo:", error);
+                        try {
+                            await signInAnonymously(auth);
+                            // onAuthStateChanged will be triggered again
+                            console.log("Intentando inicio de sesión anónimo...");
+                        } catch (anonError) {
+                            console.error("Error al iniciar sesión anónimamente:", anonError);
+                            currentUserId = null;
+                            if (appContent) appContent.classList.add('hidden');
+                            if (userIdDisplayFooter) userIdDisplayFooter.textContent = 'N/A';
+                            updateAuthUI(null); // Update UI for signed-out state
+                            cleanupListenersAndData();
+                        }
+                    }
+                } else {
+                     try {
+                        await signInAnonymously(auth);
+                        console.log("Intentando inicio de sesión anónimo (sin token personalizado)...");
+                        // onAuthStateChanged will be triggered again if successful
+                    } catch (error) {
+                        console.error("Error al iniciar sesión anónimamente (sin token personalizado):", error);
+                        currentUserId = null;
+                        if (appContent) appContent.classList.add('hidden');
+                        if (userIdDisplayFooter) userIdDisplayFooter.textContent = 'N/A';
+                        updateAuthUI(null);
+                        cleanupListenersAndData();
+                    }
+                }
+            }
+        });
+
+        function cleanupListenersAndData() {
+            if (ventasUnsubscribe) ventasUnsubscribe();
+            if (gastosUnsubscribe) gastosUnsubscribe();
+            if (stockUnsubscribe) stockUnsubscribe();
+            currentVentas = []; currentGastos = []; currentStock = [];
+            mostrarVentas(currentVentas); mostrarGastos(currentGastos); mostrarStock(currentStock);
+            actualizarResumen();
+            actualizarDropdownProductos();
+            resetVentaForm();
+            resetStockForm();
+            console.log("Listeners y datos limpiados.");
+        }
+        
+        // --- Helper function to calculate total sale amount ---
+        let calcularTotalVenta = () => { 
+            if (!ventaCantidadInput || !ventaPrecioUnitarioInput || !ventaTotalInput) return; 
+            const cantidad = parseFloat(ventaCantidadInput.value) || 0; 
+            const precioUnitario = parseFloat(ventaPrecioUnitarioInput.value) || 0; 
+            ventaTotalInput.value = (cantidad * precioUnitario).toFixed(2); 
+        };
+        if (ventaCantidadInput && ventaPrecioUnitarioInput) { 
+            ventaCantidadInput.addEventListener('input', calcularTotalVenta); 
+            ventaPrecioUnitarioInput.addEventListener('input', calcularTotalVenta); 
+        }
+        
+        // --- Helper function to set default dates for forms ---
+        let setDefaultDates = () => { 
+            const today = new Date().toISOString().split('T')[0]; 
+            const ventaFechaEl = document.getElementById('ventaFecha');
+            const gastoFechaEl = document.getElementById('gastoFecha');
+            if(ventaFechaEl) ventaFechaEl.value = today; 
+            if(gastoFechaEl) gastoFechaEl.value = today;
+        }; 
+        setDefaultDates();
+
+        // --- Firestore path helper for public data ---
+        const publicDataPath = (collectionName) => `artifacts/${firestoreAppId}/public/data/${collectionName}`;
+
+        // --- Venta Form Logic ---
+        function resetVentaForm() {
+            if (formVenta) formVenta.reset();
+            if (editingVentaIdInput) editingVentaIdInput.value = '';
+            if (formVentaTitle) formVentaTitle.textContent = 'Registrar Nueva Venta';
+            if (submitVentaButton) submitVentaButton.textContent = 'Agregar Venta';
+            if (cancelEditVentaButton) cancelEditVentaButton.classList.add('hidden');
+            setDefaultDates();
+            calcularTotalVenta();
+            originalVentaDataForEdit = null;
+            if (ventaProductoSeleccionadoSelect) ventaProductoSeleccionadoSelect.disabled = false;
+        }
+
+        if (cancelEditVentaButton) {
+            cancelEditVentaButton.addEventListener('click', resetVentaForm);
+        }
+
+        if (formVenta) {
+            formVenta.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!currentUserId) { 
+                    showConfirmModal("Error", "Debes iniciar sesión para esta acción.", () => {}); 
+                    return; 
+                }
+                
+                const productoSeleccionadoId = ventaProductoSeleccionadoSelect.value;
+                const productoSeleccionadoNombre = ventaProductoSeleccionadoSelect.options[ventaProductoSeleccionadoSelect.selectedIndex].text.split(' (Disp:')[0]; 
+                const cantidadVendida = parseInt(formVenta.ventaCantidad.value, 10);
+                const precioVentaUnitario = parseFloat(formVenta.ventaPrecioUnitario.value);
+                const totalVenta = cantidadVendida * precioVentaUnitario;
+                const ventaData = {
+                    fecha: formVenta.ventaFecha.value,
+                    stockItemId: productoSeleccionadoId, 
+                    descripcion: productoSeleccionadoNombre,
+                    cantidad: cantidadVendida,
+                    precioVentaUnitario: precioVentaUnitario,
+                    total: totalVenta, 
+                    notas: formVenta.ventaNotas.value,
+                    timestamp: serverTimestamp(),
+                    createdBy: currentUserId 
+                };
+
+                const editingId = editingVentaIdInput.value;
+
+                if (editingId) { // --- UPDATE VENTA ---
+                    try {
+                        const oldCantidad = originalVentaDataForEdit.cantidad;
+                        const oldStockItemId = originalVentaDataForEdit.stockItemId;
+                        
+                        // Revert old stock quantity
+                        await updateDoc(doc(db, publicDataPath('stock'), oldStockItemId), {
+                            cantidad: increment(oldCantidad)
+                        });
+                        
+                        // Check new stock item availability (after reverting old one)
+                        const newStockItemDoc = await getDoc(doc(db, publicDataPath('stock'), productoSeleccionadoId));
+                        let availableAfterRevert = newStockItemDoc.exists() ? newStockItemDoc.data().cantidad : 0;
+
+                        if (availableAfterRevert < cantidadVendida) {
+                             showConfirmModal("Error de Stock", `No hay suficiente stock para "${productoSeleccionadoNombre}" (${availableAfterRevert} disp.) al actualizar. Se revirtió el stock original.`, () => {});
+                             // Rollback the revert: deduct the old quantity again from the old item
+                             await updateDoc(doc(db, publicDataPath('stock'), oldStockItemId), { cantidad: increment(-oldCantidad) });
+                             return;
+                        }
+
+                        // Deduct new quantity from new stock item
+                        await updateDoc(doc(db, publicDataPath('stock'), productoSeleccionadoId), {
+                            cantidad: increment(-cantidadVendida)
+                        });
+                        
+                        await updateDoc(doc(db, publicDataPath('ventas'), editingId), ventaData); 
+                        resetVentaForm();
+                    } catch (error) {
+                        console.error("Error al actualizar venta o stock: ", error); 
+                        showConfirmModal("Error", "Ocurrió un error al actualizar la venta.", () => {}); 
+                    }
+                } else { // --- ADD NEW VENTA ---
+                    if (!productoSeleccionadoId) {
+                        showConfirmModal("Error", "Por favor, seleccione un artículo de stock.", () => {}); return;
+                    }
+                    const stockItem = currentStock.find(item => item.id === productoSeleccionadoId);
+                    if (!stockItem || stockItem.cantidad < cantidadVendida) {
+                        showConfirmModal("Error de Stock", `No hay suficiente stock para "${productoSeleccionadoNombre}". Disponible: ${stockItem ? stockItem.cantidad : 0}.`, () => {}); return;
+                    }
+                    try {
+                        await addDoc(collection(db, publicDataPath('ventas')), ventaData);
+                        await updateDoc(doc(db, publicDataPath('stock'), productoSeleccionadoId), {
+                            cantidad: increment(-cantidadVendida)
+                        });
+                        resetVentaForm();
+                    } catch (error) { 
+                        console.error("Error al guardar venta o actualizar stock: ", error); 
+                        showConfirmModal("Error", "Ocurrió un error al procesar la venta.", () => {}); 
+                    }
+                }
+            });
+        }
+
+        // --- Gasto Form Logic (CORRECTED) ---
+        if (formGasto) {
+            formGasto.addEventListener('submit', async (e) => {
+                e.preventDefault(); // Prevent default form submission which causes page refresh
+                if (!currentUserId) {
+                    showConfirmModal("Error", "Debes iniciar sesión para registrar un gasto.", () => {});
+                    return;
+                }
+
+                const gastoData = {
+                    fecha: formGasto.gastoFecha.value,
+                    descripcion: formGasto.gastoDescripcion.value,
+                    categoria: formGasto.gastoCategoria.value,
+                    monto: parseFloat(formGasto.gastoMonto.value),
+                    notas: formGasto.gastoNotas.value,
+                    timestamp: serverTimestamp(),
+                    createdBy: currentUserId
+                };
+
+                try {
+                    await addDoc(collection(db, publicDataPath('gastos')), gastoData);
+                    formGasto.reset(); // Reset form fields
+                    setDefaultDates(); // Set default date again after reset
+                    // The onSnapshot listener for gastos will automatically update the list
+                } catch (error) {
+                    console.error("Error al guardar el gasto:", error);
+                    showConfirmModal("Error", "Ocurrió un error al guardar el gasto.", () => {});
+                }
+            });
+        }
 
 
-        // --- App Initialization after Login ---
-        function initializeAppLogic() {
-            updateUserInfo();
-            setDefaultDates();
-            setupEventListeners();
-            loadAllData();
-        }
+        // --- Stock Form Logic ---
+        function resetStockForm() {
+            if(formStock) formStock.reset();
+            if(editingStockIdInput) editingStockIdInput.value = '';
+            if(formStockTitle) formStockTitle.textContent = 'Registrar Artículo en Stock';
+            if(submitStockButton) submitStockButton.textContent = 'Agregar al Stock';
+            if(cancelEditStockButton) cancelEditStockButton.classList.add('hidden');
+        }
 
-        function updateUserInfo() {
-            const userInfoElements = document.querySelectorAll('.user-info');
-            userInfoElements.forEach(el => {
-                el.innerHTML = `Usuario: <span>${currentUserName}</span>`;
-            });
-        }
+        if(cancelEditStockButton) {
+            cancelEditStockButton.addEventListener('click', resetStockForm);
+        }
 
-        // --- Navigation Logic ---
-        navButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                navButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                const targetPage = button.dataset.page;
-                pageContents.forEach(content => {
-                    content.classList.toggle('active', content.id === `page-${targetPage}`);
-                });
-            });
-        });
+        if (formStock) { 
+            formStock.addEventListener('submit', async (e) => { 
+                e.preventDefault(); 
+                if (!currentUserId) { 
+                    showConfirmModal("Error", "Debes iniciar sesión para esta acción.", () => {}); 
+                    return; 
+                } 
+                const stockData = { 
+                    nombre: formStock.stockNombre.value, 
+                    cantidad: parseInt(formStock.stockCantidad.value, 10), 
+                    notas: formStock.stockNotas.value, 
+                    timestamp: serverTimestamp(), 
+                    createdBy: currentUserId 
+                }; 
+                const editingId = editingStockIdInput.value;
 
-        // --- Confirmation Modal Logic ---
-        const showConfirmModal = (title, message, onConfirm) => {
-            confirmModalTitle.textContent = title;
-            confirmModalMessage.textContent = message;
-            confirmCallback = onConfirm;
-            confirmModal.classList.remove('hidden');
-        };
-        confirmModalCancel.addEventListener('click', () => {
-            confirmModal.classList.add('hidden');
-            confirmCallback = null;
-        });
-        confirmModalConfirm.addEventListener('click', () => {
-            if (confirmCallback) confirmCallback();
-            confirmModal.classList.add('hidden');
-            confirmCallback = null;
-        });
+                try { 
+                    if (editingId) { // UPDATE STOCK
+                        await updateDoc(doc(db, publicDataPath('stock'), editingId), stockData);
+                    } else { // ADD NEW STOCK
+                        await addDoc(collection(db, publicDataPath('stock')), stockData);
+                    }
+                    resetStockForm();
+                } catch (error) { 
+                    console.error("Error con artículo de stock:", error); 
+                    showConfirmModal("Error", "Ocurrió un error al guardar el artículo.", () => {}); 
+                } 
+            }); 
+        }
+        
+        // --- Function to load PUBLIC financial data ---
+        let cargarDatosFinancierosPublicos = () => { 
+            if(!currentUserId) return;
+            // Ventas
+            const ventasQuery = query(collection(db, publicDataPath('ventas'))); 
+            if(ventasUnsubscribe) ventasUnsubscribe(); // Unsubscribe from previous listener if exists
+            ventasUnsubscribe = onSnapshot(ventasQuery, snapshot => { 
+                currentVentas = snapshot.docs.map(d=>({id:d.id,...d.data()})); 
+                currentVentas.sort((a,b)=>(b.timestamp&&a.timestamp)?b.timestamp.toMillis()-a.timestamp.toMillis():new Date(b.fecha)-new Date(a.fecha)); 
+                mostrarVentas(currentVentas); 
+                actualizarResumen();
+            }, error => { console.error("Error cargando ventas públicas:", error); }); 
 
-        // --- Firestore Path Helper ---
-        const publicDataPath = (collectionName) => `artifacts/${firestoreAppId}/public/data/${collectionName}`;
+            // Gastos
+            const gastosQuery = query(collection(db, publicDataPath('gastos'))); 
+            if(gastosUnsubscribe) gastosUnsubscribe(); // Unsubscribe from previous listener
+            gastosUnsubscribe = onSnapshot(gastosQuery, snapshot => {
+                currentGastos = snapshot.docs.map(d=>({id:d.id,...d.data()})); 
+                currentGastos.sort((a,b)=>(b.timestamp&&a.timestamp)?b.timestamp.toMillis()-a.timestamp.toMillis():new Date(b.fecha)-new Date(a.fecha)); 
+                mostrarGastos(currentGastos); 
+                actualizarResumen();
+            }, error => { console.error("Error cargando gastos públicos:", error); });
+        };
+        
+        // --- Function to load PUBLIC stock data ---
+        function cargarStockPublico() {
+            if (!currentUserId) return;
+            const stockQuery = query(collection(db, publicDataPath('stock')));
+            if (stockUnsubscribe) stockUnsubscribe(); 
+            stockUnsubscribe = onSnapshot(stockQuery, (snapshot) => {
+                currentStock = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+                currentStock.sort((a, b) => (a.nombre && b.nombre) ? a.nombre.localeCompare(b.nombre) : 0);
+                mostrarStock(currentStock);
+                actualizarDropdownProductos(); 
+            }, (error) => { console.error("Error al obtener stock público: ", error); });
+        }
 
-        // --- Event Listeners Setup ---
-        function setupEventListeners() {
-            // Sale form
-            const ventaCantidadInput = document.getElementById('ventaCantidad');
-            const ventaPrecioUnitarioInput = document.getElementById('ventaPrecioUnitario');
-            const calcularTotalVenta = () => {
-                const cantidad = parseFloat(ventaCantidadInput.value) || 0;
-                const precioUnitario = parseFloat(ventaPrecioUnitarioInput.value) || 0;
-                document.getElementById('ventaTotal').value = (cantidad * precioUnitario).toFixed(2);
-            };
-            ventaCantidadInput.addEventListener('input', calcularTotalVenta);
-            ventaPrecioUnitarioInput.addEventListener('input', calcularTotalVenta);
+        // --- Function to populate the product dropdown ---
+        function actualizarDropdownProductos() {
+            if (!ventaProductoSeleccionadoSelect) return;
+            const valorSeleccionadoPreviamente = ventaProductoSeleccionadoSelect.value; 
+            ventaProductoSeleccionadoSelect.innerHTML = '<option value="">Seleccione un artículo...</option>'; 
+            currentStock.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id; 
+                option.textContent = `${item.nombre} (Disp: ${item.cantidad})`; 
+                option.disabled = item.cantidad === 0 && !(editingVentaIdInput.value && originalVentaDataForEdit && originalVentaDataForEdit.stockItemId === item.id);
+                ventaProductoSeleccionadoSelect.appendChild(option);
+            });
+            if (valorSeleccionadoPreviamente && ventaProductoSeleccionadoSelect.querySelector(`option[value="${valorSeleccionadoPreviamente}"]`)) {
+                ventaProductoSeleccionadoSelect.value = valorSeleccionadoPreviamente;
+            }
+        }
 
-            formVenta.addEventListener('submit', handleVentaSubmit);
-            document.getElementById('cancelEditVentaButton').addEventListener('click', resetVentaForm);
-            
-            // Expense form
-            formGasto.addEventListener('submit', handleGastoSubmit);
+        // --- UI Display functions ---
+        let mostrarVentas = (ventas) => { 
+            const div = document.getElementById('listaVentas'); 
+            if (!div) return; 
+            div.innerHTML = ventas.length === 0 ? '<p class="text-gray-400">Aún no hay ventas registradas.</p>' : ''; 
+            ventas.forEach(v => { 
+                const item = document.createElement('div'); 
+                item.className = 'list-item'; 
+                item.innerHTML = `
+                    <p><strong>Fecha:</strong> ${v.fecha}</p>
+                    <p><strong>Artículo:</strong> ${v.descripcion || 'N/A'}</p>
+                    <p><strong>Cant:</strong> ${v.cantidad} x $${parseFloat(v.precioVentaUnitario || 0).toFixed(2)} c/u</p>
+                    <p><strong>Total Venta:</strong> $${parseFloat(v.total || 0).toFixed(2)}</p>
+                    ${v.notas ? `<p><strong>Notas:</strong> ${v.notas}</p>` : ''}
+                    ${v.createdBy ? `<p class="text-xs text-gray-500 pt-1">Registrado por: ${v.createdBy.substring(0,8)}...</p>`: ''}
+                    <div class="actions mt-2 flex gap-2">
+                        <button data-tipo="ventas" data-id="${v.id}" class="edit-button btn-secondary">Editar</button>
+                        <button data-tipo="ventas" data-id="${v.id}" class="delete-button">Eliminar</button>
+                    </div>`; 
+                div.appendChild(item); 
+            }); 
+        };
 
-            // Stock form
-            formStock.addEventListener('submit', handleStockSubmit);
-            document.getElementById('cancelEditStockButton').addEventListener('click', resetStockForm);
+        let mostrarGastos = (gastos) => { 
+            const d = document.getElementById('listaGastos'); 
+            if(!d) return; 
+            d.innerHTML = gastos.length === 0 ? '<p class="text-gray-400">Aún no hay gastos registrados.</p>' : ''; 
+            gastos.forEach(g => { 
+                const i = document.createElement('div'); 
+                i.className = 'list-item'; 
+                const categoriaDisplay = g.categoria ? g.categoria.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase()) : 'N/A';
+                i.innerHTML = `
+                    <p><strong>Fecha:</strong> ${g.fecha}</p>
+                    <p><strong>Descripción:</strong> ${g.descripcion}</p>
+                    <p><strong>Categoría:</strong> ${categoriaDisplay}</p>
+                    <p><strong>Monto:</strong> $${parseFloat(g.monto || 0).toFixed(2)}</p>
+                    ${g.notas?`<p><strong>Notas:</strong> ${g.notas}</p>`:''}
+                    ${g.createdBy ? `<p class="text-xs text-gray-500 pt-1">Registrado por: ${g.createdBy.substring(0,8)}...</p>`: ''}
+                    <div class="actions mt-2 flex gap-2">
+                        <button data-tipo="gastos" data-id="${g.id}" class="delete-button">Eliminar</button>
+                    </div>`; 
+                d.appendChild(i); 
+            });
+        };
 
-            // Monthly summary
-            document.getElementById('generateSummaryBtn').addEventListener('click', generateMonthlySummary);
+        let mostrarStock = (stockItems) => { 
+            const listaStockDiv = document.getElementById('listaStock'); 
+            if (!listaStockDiv) return; 
+            listaStockDiv.innerHTML = ''; 
+            if (stockItems.length === 0) { 
+                listaStockDiv.innerHTML = '<p class="text-gray-400">Aún no hay artículos en stock.</p>'; 
+                return; 
+            } 
+            stockItems.forEach(item => { 
+                const itemDiv = document.createElement('div'); 
+                itemDiv.className = 'list-item'; 
+                itemDiv.innerHTML = `
+                    <p><strong>Nombre:</strong> ${item.nombre}</p>
+                    <p><strong>Cantidad:</strong> ${item.cantidad}</p>
+                    ${item.notas ? `<p><strong>Notas:</strong> ${item.notas}</p>` : ''}
+                    ${item.createdBy ? `<p class="text-xs text-gray-500 pt-1">Registrado por: ${item.createdBy.substring(0,8)}...</p>`: ''}
+                    <div class="actions mt-2 flex gap-2">
+                        <button data-tipo="stock" data-id="${item.id}" class="edit-button btn-secondary">Editar</button>
+                        <button data-tipo="stock" data-id="${item.id}" class="delete-button">Eliminar</button>
+                    </div>`; 
+                listaStockDiv.appendChild(itemDiv); 
+            }); 
+        };
+        
+        // --- Event delegation for delete and edit buttons ---
+        document.addEventListener('click', async function(event) { 
+            const target = event.target;
+            if (target && target.classList.contains('delete-button')) { 
+                const tipo = target.dataset.tipo; 
+                const docId = target.dataset.id; 
+                if (tipo && docId) { handleDeleteDocument(tipo, docId); } 
+            }
+            if (target && target.classList.contains('edit-button')) {
+                const tipo = target.dataset.tipo;
+                const docId = target.dataset.id;
+                if (tipo === 'ventas') await handleEditVenta(docId);
+                if (tipo === 'stock') handleEditStock(docId);
+            }
+        });
 
-            // Event delegation for edit/delete
-            appContent.addEventListener('click', handleActionClick);
-        }
-        
-        // --- Data Loading ---
-        function loadAllData() {
-            if (!db) return; // Don't load data if Firebase is not initialized
-            // Unsubscribe from previous listeners if they exist
-            if (ventasUnsubscribe) ventasUnsubscribe();
-            if (gastosUnsubscribe) gastosUnsubscribe();
-            if (stockUnsubscribe) stockUnsubscribe();
+        // --- Edit Handlers ---
+        async function handleEditVenta(ventaId) {
+            const venta = currentVentas.find(v => v.id === ventaId);
+            if (!venta) { console.error("Venta no encontrada para editar"); return; }
+            
+            originalVentaDataForEdit = {...venta}; 
 
-            // Load Sales
-            const ventasQuery = query(collection(db, publicDataPath('ventas')));
-            ventasUnsubscribe = onSnapshot(ventasQuery, snapshot => {
-                currentVentas = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                currentVentas.sort((a, b) => (b.timestamp && a.timestamp) ? b.timestamp.toMillis() - a.timestamp.toMillis() : new Date(b.fecha) - new Date(a.fecha));
-                displayVentas(currentVentas);
-                updateFinancialSummary();
-            }, error => console.error("Error loading sales:", error));
+            if(editingVentaIdInput) editingVentaIdInput.value = ventaId;
+            if(formVentaTitle) formVentaTitle.textContent = 'Editar Venta';
+            if(submitVentaButton) submitVentaButton.textContent = 'Actualizar Venta';
+            if(cancelEditVentaButton) cancelEditVentaButton.classList.remove('hidden');
 
-            // Load Expenses
-            const gastosQuery = query(collection(db, publicDataPath('gastos')));
-            gastosUnsubscribe = onSnapshot(gastosQuery, snapshot => {
-                currentGastos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                currentGastos.sort((a, b) => (b.timestamp && a.timestamp) ? b.timestamp.toMillis() - a.timestamp.toMillis() : new Date(b.fecha) - new Date(a.fecha));
-                displayGastos(currentGastos);
-                updateFinancialSummary();
-            }, error => console.error("Error loading expenses:", error));
+            if(formVenta.ventaFecha) formVenta.ventaFecha.value = venta.fecha;
+            if(ventaProductoSeleccionadoSelect) {
+                ventaProductoSeleccionadoSelect.value = venta.stockItemId;
+                 // Allow changing the product. The stock adjustment logic in formVenta submit handles this.
+                ventaProductoSeleccionadoSelect.disabled = false; 
+            }
+            if(formVenta.ventaCantidad) formVenta.ventaCantidad.value = venta.cantidad;
+            if(formVenta.ventaPrecioUnitario) formVenta.ventaPrecioUnitario.value = venta.precioVentaUnitario;
+            if(formVenta.ventaNotas) formVenta.ventaNotas.value = venta.notas;
+            calcularTotalVenta();
+            formVenta.scrollIntoView({ behavior: 'smooth' });
+        }
 
-            // Load Stock
-            const stockQuery = query(collection(db, publicDataPath('stock')));
-            stockUnsubscribe = onSnapshot(stockQuery, snapshot => {
-                currentStock = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
-                currentStock.sort((a, b) => a.nombre.localeCompare(b.nombre));
-                displayStock(currentStock);
-                updateProductDropdown();
-            }, error => console.error("Error loading stock:", error));
-        }
+        function handleEditStock(stockId) {
+            const stockItem = currentStock.find(s => s.id === stockId);
+            if (!stockItem) { console.error("Artículo de stock no encontrado para editar"); return; }
 
-        // --- Form Handlers ---
-        async function handleVentaSubmit(e) {
-            e.preventDefault();
-            const productoSeleccionadoSelect = document.getElementById('ventaProductoSeleccionado');
-            const productoSeleccionadoId = productoSeleccionadoSelect.value;
-            const productoSeleccionadoNombre = productoSeleccionadoSelect.options[productoSeleccionadoSelect.selectedIndex].text.split(' (Disp:')[0];
-            const cantidadVendida = parseInt(formVenta.ventaCantidad.value, 10);
-            
-            const ventaData = {
-                fecha: formVenta.ventaFecha.value,
-                stockItemId: productoSeleccionadoId,
-                descripcion: productoSeleccionadoNombre,
-                cantidad: cantidadVendida,
-                precioVentaUnitario: parseFloat(formVenta.ventaPrecioUnitario.value),
-                total: parseFloat(document.getElementById('ventaTotal').value),
-                notas: formVenta.ventaNotas.value,
-                timestamp: serverTimestamp(),
-                createdBy: currentUserName
-            };
+            if(editingStockIdInput) editingStockIdInput.value = stockId;
+            if(formStockTitle) formStockTitle.textContent = 'Editar Artículo de Stock';
+            if(submitStockButton) submitStockButton.textContent = 'Actualizar Artículo';
+            if(cancelEditStockButton) cancelEditStockButton.classList.remove('hidden');
 
-            const editingId = document.getElementById('editingVentaId').value;
+            if(formStock.stockNombre) formStock.stockNombre.value = stockItem.nombre;
+            if(formStock.stockCantidad) formStock.stockCantidad.value = stockItem.cantidad;
+            if(formStock.stockNotas) formStock.stockNotas.value = stockItem.notas;
+            formStock.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // --- Function to handle document deletion from Firestore ---
+        let handleDeleteDocument = (tipo, docId) => { 
+            if (!currentUserId) { 
+                showConfirmModal("Error", "Debes iniciar sesión para eliminar.", () => {}); 
+                return; 
+            } 
+            const itemName = tipo === 'ventas' ? 'venta' : tipo === 'gastos' ? 'gasto' : 'artículo de stock'; 
+            let confirmMessage = `¿Está seguro que desea eliminar este ${itemName}? Esta acción no se puede deshacer.`;
+            if (tipo === 'ventas') {
+                confirmMessage += " Al eliminar una venta, el stock del artículo vendido se REAJUSTARÁ (aumentará).";
+            } else if (tipo === 'stock') {
+                confirmMessage += " Si este artículo tiene ventas asociadas, esas ventas NO se eliminarán, pero podrían mostrar 'Artículo N/A'.";
+            }
 
-            if (editingId) { // UPDATE
-                try {
-                    const oldCantidad = originalVentaDataForEdit.cantidad;
-                    const oldStockItemId = originalVentaDataForEdit.stockItemId;
-                    
-                    await updateDoc(doc(db, publicDataPath('stock'), oldStockItemId), { cantidad: increment(oldCantidad) });
-                    await updateDoc(doc(db, publicDataPath('stock'), productoSeleccionadoId), { cantidad: increment(-cantidadVendida) });
-                    await updateDoc(doc(db, publicDataPath('ventas'), editingId), ventaData);
-                    resetVentaForm();
-                } catch (error) {
-                    console.error("Error updating sale:", error);
-                    showConfirmModal("Error", "No se pudo actualizar la venta.", () => {});
-                }
-            } else { // ADD NEW
-                const stockItem = currentStock.find(item => item.id === productoSeleccionadoId);
-                if (!stockItem || stockItem.cantidad < cantidadVendida) {
-                    showConfirmModal("Error de Stock", `Stock insuficiente para "${productoSeleccionadoNombre}". Disponible: ${stockItem ? stockItem.cantidad : 0}.`, () => {});
-                    return;
-                }
-                try {
-                    await addDoc(collection(db, publicDataPath('ventas')), ventaData);
-                    await updateDoc(doc(db, publicDataPath('stock'), productoSeleccionadoId), { cantidad: increment(-cantidadVendida) });
-                    resetVentaForm();
-                } catch (error) {
-                    console.error("Error creating sale:", error);
-                    showConfirmModal("Error", "No se pudo registrar la venta.", () => {});
-                }
-            }
-        }
+            showConfirmModal( 
+                `Confirmar Eliminación`, 
+                confirmMessage, 
+                async () => { 
+                    try { 
+                        if (tipo === 'ventas') {
+                            const ventaDoc = await getDoc(doc(db, publicDataPath('ventas'), docId));
+                            if (ventaDoc.exists()) {
+                                const ventaData = ventaDoc.data();
+                                if (ventaData.stockItemId && ventaData.cantidad > 0) {
+                                    await updateDoc(doc(db, publicDataPath('stock'), ventaData.stockItemId), { 
+                                        cantidad: increment(ventaData.cantidad) 
+                                    });
+                                }
+                            }
+                        }
+                        await deleteDoc(doc(db, publicDataPath(tipo), docId)); 
+                        if (tipo === 'ventas' && editingVentaIdInput.value === docId) resetVentaForm();
+                        if (tipo === 'stock' && editingStockIdInput.value === docId) resetStockForm();
+                    } catch (error) { 
+                        console.error(`Error al eliminar ${itemName} público:`, error); 
+                        showConfirmModal("Error", `Ocurrió un error al eliminar el ${itemName}.`, () => {}); 
+                    } 
+                }
+            ); 
+        };
+        
+        // --- Function to update the financial summary display ---
+        let actualizarResumen = () => { 
+            const totalIngresos = currentVentas.reduce((sum, v) => sum + parseFloat(v.total || 0), 0); 
+            const totalEgresos = currentGastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0); 
+            const balanceGeneral = totalIngresos - totalEgresos; 
+            
+            const totalIngresosEl = document.getElementById('totalIngresos'), 
+                  totalEgresosEl = document.getElementById('totalEgresos'), 
+                  balanceGeneralEl = document.getElementById('balanceGeneral'); 
+            
+            if(totalIngresosEl) totalIngresosEl.textContent = `$${totalIngresos.toFixed(2)}`; 
+            if(totalEgresosEl) totalEgresosEl.textContent = `$${totalEgresos.toFixed(2)}`; 
+            if(balanceGeneralEl) { 
+                balanceGeneralEl.textContent = `$${balanceGeneral.toFixed(2)}`; 
+                balanceGeneralEl.style.color = balanceGeneral >= 0 ? '#4ade80' : '#f87171'; 
+            }
+        };
+        
+        const currentYearEl = document.getElementById('currentYear');
+        if(currentYearEl) currentYearEl.textContent = new Date().getFullYear();
 
-        async function handleGastoSubmit(e) {
-            e.preventDefault();
-            const gastoData = {
-                fecha: formGasto.gastoFecha.value,
-                descripcion: formGasto.gastoDescripcion.value,
-                monto: parseFloat(formGasto.gastoMonto.value),
-                timestamp: serverTimestamp(),
-                createdBy: currentUserName
-            };
-            try {
-                await addDoc(collection(db, publicDataPath('gastos')), gastoData);
-                formGasto.reset();
-                setDefaultDates();
-            } catch (error) {
-                console.error("Error saving expense:", error);
-                showConfirmModal("Error", "No se pudo guardar el gasto.", () => {});
-            }
-        }
-
-        async function handleStockSubmit(e) {
-            e.preventDefault();
-            const stockData = {
-                nombre: formStock.stockNombre.value,
-                cantidad: parseInt(formStock.stockCantidad.value, 10),
-                notas: formStock.stockNotas.value,
-                timestamp: serverTimestamp(),
-                createdBy: currentUserName
-            };
-            const editingId = document.getElementById('editingStockId').value;
-            try {
-                if (editingId) {
-                    await updateDoc(doc(db, publicDataPath('stock'), editingId), stockData);
-                } else {
-                    await addDoc(collection(db, publicDataPath('stock')), stockData);
-                }
-                resetStockForm();
-            } catch (error) {
-                console.error("Error with stock item:", error);
-                showConfirmModal("Error", "No se pudo guardar el artículo.", () => {});
-            }
-        }
-        
-        // --- Action Click Handler (Delegation) ---
-        function handleActionClick(event) {
-            const target = event.target;
-            const docId = target.dataset.id;
-            const tipo = target.dataset.tipo;
-
-            if (!docId || !tipo) return;
-
-            if (target.classList.contains('delete-button')) {
-                handleDeleteDocument(tipo, docId);
-            } else if (target.classList.contains('edit-button')) {
-                if (tipo === 'ventas') handleEditVenta(docId);
-                if (tipo === 'stock') handleEditStock(docId);
-            }
-        }
-
-        // --- Edit & Delete Logic ---
-        function handleDeleteDocument(tipo, docId) {
-            const itemName = tipo === 'ventas' ? 'venta' : tipo === 'gastos' ? 'gasto' : 'artículo de stock';
-            let confirmMessage = `¿Seguro que desea eliminar este ${itemName}?`;
-            if (tipo === 'ventas') confirmMessage += " El stock del artículo se reajustará.";
-            
-            showConfirmModal('Confirmar Eliminación', confirmMessage, async () => {
-                try {
-                    if (tipo === 'ventas') {
-                        const ventaDoc = await getDoc(doc(db, publicDataPath('ventas'), docId));
-                        if (ventaDoc.exists()) {
-                            const ventaData = ventaDoc.data();
-                            if (ventaData.stockItemId && ventaData.cantidad > 0) {
-                                await updateDoc(doc(db, publicDataPath('stock'), ventaData.stockItemId), {
-                                    cantidad: increment(ventaData.cantidad)
-                                });
-                            }
-                        }
-                    }
-                    await deleteDoc(doc(db, publicDataPath(tipo), docId));
-                    if (tipo === 'ventas' && document.getElementById('editingVentaId').value === docId) resetVentaForm();
-                    if (tipo === 'stock' && document.getElementById('editingStockId').value === docId) resetStockForm();
-                } catch (error) {
-                    console.error(`Error deleting ${itemName}:`, error);
-                    showConfirmModal("Error", `No se pudo eliminar el ${itemName}.`, () => {});
-                }
-            });
-        }
-
-        function handleEditVenta(ventaId) {
-            const venta = currentVentas.find(v => v.id === ventaId);
-            if (!venta) return;
-            
-            originalVentaDataForEdit = { ...venta };
-            
-            document.getElementById('editingVentaId').value = ventaId;
-            document.getElementById('formVentaTitle').textContent = 'Editar Venta';
-            document.getElementById('submitVentaButton').textContent = 'Actualizar Venta';
-            document.getElementById('cancelEditVentaButton').classList.remove('hidden');
-
-            formVenta.ventaFecha.value = venta.fecha;
-            document.getElementById('ventaProductoSeleccionado').value = venta.stockItemId;
-            formVenta.ventaCantidad.value = venta.cantidad;
-            formVenta.ventaPrecioUnitario.value = venta.precioVentaUnitario;
-            formVenta.ventaNotas.value = venta.notas;
-            document.getElementById('ventaTotal').value = venta.total.toFixed(2);
-            
-            document.querySelector('.nav-button[data-page="pdv"]').click();
-            formVenta.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function handleEditStock(stockId) {
-            const stockItem = currentStock.find(s => s.id === stockId);
-            if (!stockItem) return;
-
-            document.getElementById('editingStockId').value = stockId;
-            document.getElementById('formStockTitle').textContent = 'Editar Artículo';
-            document.getElementById('submitStockButton').textContent = 'Actualizar Artículo';
-            document.getElementById('cancelEditStockButton').classList.remove('hidden');
-
-            formStock.stockNombre.value = stockItem.nombre;
-            formStock.stockCantidad.value = stockItem.cantidad;
-            formStock.stockNotas.value = stockItem.notas;
-            formStock.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // --- UI Display & Update Functions ---
-        function displayVentas(ventas) {
-            const div = document.getElementById('listaVentas');
-            div.innerHTML = ventas.length === 0 ? '<p class="text-gray-400">Aún no hay ventas registradas.</p>' : '';
-            ventas.forEach(v => {
-                const item = document.createElement('div');
-                item.className = 'list-item';
-                item.innerHTML = `
-                    <p><strong>Fecha:</strong> ${v.fecha}</p>
-                    <p><strong>Artículo:</strong> ${v.descripcion || 'N/A'}</p>
-                    <p><strong>Total:</strong> $${parseFloat(v.total || 0).toFixed(2)}</p>
-                    <p class="text-xs text-gray-500 pt-1">Registrado por: ${v.createdBy || 'N/A'}</p>
-                    <div class="actions mt-2 flex gap-2">
-                        <button data-tipo="ventas" data-id="${v.id}" class="edit-button btn-secondary">Editar</button>
-                        <button data-tipo="ventas" data-id="${v.id}" class="delete-button">Eliminar</button>
-                    </div>`;
-                div.appendChild(item);
-            });
-        }
-
-        function displayGastos(gastos) {
-            const div = document.getElementById('listaGastos');
-            div.innerHTML = gastos.length === 0 ? '<p class="text-gray-400">Aún no hay gastos registrados.</p>' : '';
-            gastos.forEach(g => {
-                const item = document.createElement('div');
-                item.className = 'list-item';
-                item.innerHTML = `
-                    <p><strong>Fecha:</strong> ${g.fecha}</p>
-                    <p><strong>Descripción:</strong> ${g.descripcion}</p>
-                    <p><strong>Monto:</strong> $${parseFloat(g.monto || 0).toFixed(2)}</p>
-                    <p class="text-xs text-gray-500 pt-1">Registrado por: ${g.createdBy || 'N/A'}</p>
-                    <div class="actions mt-2 flex gap-2">
-                        <button data-tipo="gastos" data-id="${g.id}" class="delete-button">Eliminar</button>
-                    </div>`;
-                div.appendChild(item);
-            });
-        }
-
-        function displayStock(stockItems) {
-            const div = document.getElementById('listaStock');
-            div.innerHTML = stockItems.length === 0 ? '<p class="text-gray-400">Aún no hay artículos en stock.</p>' : '';
-            stockItems.forEach(item => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'list-item';
-                itemDiv.innerHTML = `
-                    <p><strong>Nombre:</strong> ${item.nombre}</p>
-                    <p><strong>Cantidad:</strong> ${item.cantidad}</p>
-                    ${item.notas ? `<p><strong>Notas:</strong> ${item.notas}</p>` : ''}
-                    <p class="text-xs text-gray-500 pt-1">Registrado por: ${item.createdBy || 'N/A'}</p>
-                    <div class="actions mt-2 flex gap-2">
-                        <button data-tipo="stock" data-id="${item.id}" class="edit-button btn-secondary">Editar</button>
-                        <button data-tipo="stock" data-id="${item.id}" class="delete-button">Eliminar</button>
-                    </div>`;
-                div.appendChild(itemDiv);
-            });
-        }
-
-        function updateFinancialSummary() {
-            const totalIngresos = currentVentas.reduce((sum, v) => sum + (v.total || 0), 0);
-            const totalEgresos = currentGastos.reduce((sum, g) => sum + (g.monto || 0), 0);
-            const balanceGeneral = totalIngresos - totalEgresos;
-
-            document.getElementById('totalIngresos').textContent = `$${totalIngresos.toFixed(2)}`;
-            document.getElementById('totalEgresos').textContent = `$${totalEgresos.toFixed(2)}`;
-            const balanceEl = document.getElementById('balanceGeneral');
-            balanceEl.textContent = `$${balanceGeneral.toFixed(2)}`;
-            balanceEl.style.color = balanceGeneral >= 0 ? '#4ade80' : '#f87171';
-        }
-
-        function updateProductDropdown() {
-            const select = document.getElementById('ventaProductoSeleccionado');
-            const currentValue = select.value;
-            select.innerHTML = '<option value="">Seleccione un artículo...</option>';
-            currentStock.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.id;
-                option.textContent = `${item.nombre} (Disp: ${item.cantidad})`;
-                option.disabled = item.cantidad === 0;
-                select.appendChild(option);
-            });
-            select.value = currentValue;
-        }
-        
-        // --- Monthly Summary ---
-        function generateMonthlySummary() {
-            const monthSelector = document.getElementById('monthSelector');
-            const resultDiv = document.getElementById('monthlySummaryResult');
-            const selectedMonth = monthSelector.value; // YYYY-MM
-
-            if (!selectedMonth) {
-                showConfirmModal("Aviso", "Por favor, seleccione un mes y año.", () => {});
-                return;
-            }
-
-            const [year, month] = selectedMonth.split('-');
-
-            const monthlyVentas = currentVentas.filter(v => v.fecha.startsWith(selectedMonth));
-            const monthlyGastos = currentGastos.filter(g => g.fecha.startsWith(selectedMonth));
-
-            const monthlyIngresos = monthlyVentas.reduce((sum, v) => sum + v.total, 0);
-            const monthlyEgresos = monthlyGastos.reduce((sum, g) => sum + g.monto, 0);
-            const monthlyBalance = monthlyIngresos - monthlyEgresos;
-
-            resultDiv.innerHTML = `
-                <div class="grid grid-cols-3 gap-4">
-                    <div class="summary-item !bg-tertiary"><h4>Ingresos del Mes</h4><p>$${monthlyIngresos.toFixed(2)}</p></div>
-                    <div class="summary-item !bg-tertiary"><h4>Egresos del Mes</h4><p>$${monthlyEgresos.toFixed(2)}</p></div>
-                    <div class="summary-item !bg-tertiary"><h4>Balance del Mes</h4><p style="color: ${monthlyBalance >= 0 ? '#4ade80' : '#f87171'}">$${monthlyBalance.toFixed(2)}</p></div>
-                </div>
-            `;
-            resultDiv.classList.remove('hidden');
-        }
-
-        // --- Utility & Reset Functions ---
-        function setDefaultDates() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('ventaFecha').value = today;
-            document.getElementById('gastoFecha').value = today;
-            document.getElementById('monthSelector').value = today.substring(0, 7);
-        }
-
-        function resetVentaForm() {
-            formVenta.reset();
-            document.getElementById('editingVentaId').value = '';
-            document.getElementById('formVentaTitle').textContent = 'Registrar Nueva Venta';
-            document.getElementById('submitVentaButton').textContent = 'Agregar Venta';
-            document.getElementById('cancelEditVentaButton').classList.add('hidden');
-            setDefaultDates();
-            document.getElementById('ventaTotal').value = '0.00';
-            originalVentaDataForEdit = null;
-        }
-
-        function resetStockForm() {
-            formStock.reset();
-            document.getElementById('editingStockId').value = '';
-            document.getElementById('formStockTitle').textContent = 'Registrar Artículo';
-            document.getElementById('submitStockButton').textContent = 'Agregar al Stock';
-            document.getElementById('cancelEditStockButton').classList.add('hidden');
-        }
-
-    </script>
+    </script>
 </body>
-</html>
+</html> 
