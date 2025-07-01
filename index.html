@@ -6,7 +6,8 @@
     <title>Control Financiero y de Stock</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet">
+    <!-- Corrected Phosphor Icons CDN link -->
+    <link href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/bold/style.css" rel="stylesheet">
     <style>
         :root {
             --bg-primary: #0D0B14;
@@ -458,13 +459,30 @@
         import { getFirestore, doc, addDoc, collection, onSnapshot, query, deleteDoc, serverTimestamp, setLogLevel, updateDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
         // --- Firebase Configuration ---
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        // Added a fallback configuration to prevent initialization errors.
+        const userProvidedConfig = {
+            apiKey: "AIzaSy...", // Replace with your actual config
+            authDomain: "your-project-id.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project-id.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef123456"
+        };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userProvidedConfig;
         const firestoreAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         // --- Initialize Firebase ---
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        setLogLevel('info');
+        let db;
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            setLogLevel('info');
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+            // Hide login form and show an error message on the page
+            document.getElementById('loginScreen').innerHTML = `<div class="login-box"><h2>Error de Configuración</h2><p>La aplicación no pudo iniciarse. Por favor, verifique la configuración de Firebase.</p></div>`;
+        }
+        
 
         // --- Global Variables ---
         let currentUserName = null;
@@ -494,19 +512,26 @@
         let confirmCallback = null;
 
         // --- Login Logic ---
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = loginNameInput.value.trim().toUpperCase();
-            if (name === 'SOL' || name === 'BRANDON') {
-                currentUserName = name.charAt(0) + name.slice(1).toLowerCase();
-                loginScreen.classList.add('hidden');
-                appContent.classList.remove('hidden');
-                initializeAppLogic();
-            } else {
-                loginError.textContent = 'Nombre no válido. Intente con SOL o BRANDON.';
-                loginNameInput.focus();
-            }
-        });
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault(); // This is crucial to prevent page reload
+                if (!db) { // Check if Firebase initialized
+                    loginError.textContent = 'Error de configuración de la base de datos.';
+                    return;
+                }
+                const name = loginNameInput.value.trim().toUpperCase();
+                if (name === 'SOL' || name === 'BRANDON') {
+                    currentUserName = name.charAt(0) + name.slice(1).toLowerCase();
+                    loginScreen.classList.add('hidden');
+                    appContent.classList.remove('hidden');
+                    initializeAppLogic();
+                } else {
+                    loginError.textContent = 'Nombre no válido. Intente con SOL o BRANDON.';
+                    loginNameInput.focus();
+                }
+            });
+        }
+
 
         // --- App Initialization after Login ---
         function initializeAppLogic() {
@@ -587,6 +612,7 @@
         
         // --- Data Loading ---
         function loadAllData() {
+            if (!db) return; // Don't load data if Firebase is not initialized
             // Unsubscribe from previous listeners if they exist
             if (ventasUnsubscribe) ventasUnsubscribe();
             if (gastosUnsubscribe) gastosUnsubscribe();
@@ -643,26 +669,17 @@
             const editingId = document.getElementById('editingVentaId').value;
 
             if (editingId) { // UPDATE
-                // Complex logic: revert old stock, check availability, deduct new stock
-                // This part requires careful implementation to avoid race conditions.
-                // For simplicity here, we'll assume the logic from your original code is what's desired.
-                // A more robust solution might use Firestore Transactions.
                 try {
                     const oldCantidad = originalVentaDataForEdit.cantidad;
                     const oldStockItemId = originalVentaDataForEdit.stockItemId;
                     
-                    // Revert old stock quantity
                     await updateDoc(doc(db, publicDataPath('stock'), oldStockItemId), { cantidad: increment(oldCantidad) });
-                    
-                    // Deduct new quantity from potentially new stock item
                     await updateDoc(doc(db, publicDataPath('stock'), productoSeleccionadoId), { cantidad: increment(-cantidadVendida) });
-                    
                     await updateDoc(doc(db, publicDataPath('ventas'), editingId), ventaData);
                     resetVentaForm();
                 } catch (error) {
                     console.error("Error updating sale:", error);
                     showConfirmModal("Error", "No se pudo actualizar la venta.", () => {});
-                    // Rollback logic would be needed here in a real-world app
                 }
             } else { // ADD NEW
                 const stockItem = currentStock.find(item => item.id === productoSeleccionadoId);
@@ -786,7 +803,6 @@
             formVenta.ventaNotas.value = venta.notas;
             document.getElementById('ventaTotal').value = venta.total.toFixed(2);
             
-            // Switch to PDV page and scroll to form
             document.querySelector('.nav-button[data-page="pdv"]').click();
             formVenta.scrollIntoView({ behavior: 'smooth' });
         }
@@ -949,4 +965,3 @@
     </script>
 </body>
 </html>
-
